@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Smart Child Health</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/dist/sweetalert2.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/dist/sweetalert2.all.min.js"></script>
+<style>
+/* =====================================================================
+   DESIGN TOKENS
+   ===================================================================== */
+:root {
+  color-scheme: light;
+  --brand-900: #064e3b; --brand-700: #047857; --brand-600: #059669; --brand-500: #10b981; --brand-100: #d1fae5; --brand-50: #ecfdf5;
+  --navy: #0f172a; --accent: #f97316; --accent-soft: #fff1e6;
+  --bg: #f3f6f5; --surface: rgba(255,255,255,.86); --surface-solid: #ffffff; --surface-2: #f7faf9;
+  --border: rgba(15,23,42,.08); --border-strong: rgba(15,23,42,.16);
+  --text: #0f172a; --text-2: #475569; --muted: #64748b;
+  --shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.06);
+  --shadow-lg: 0 20px 50px rgba(15,23,42,.14);
+  --radius: 16px; --radius-sm: 10px;
+  /* status (fixed — always with icon + label) */
+  --st-good: #0ca30c; --st-warn: #fab219; --st-serious: #ec835a; --st-critical: #d03b3b;
+  --st-good-bg: #e7f6e7; --st-warn-bg: #fff6df; --st-serious-bg: #fdeee7; --st-critical-bg: #fbe9e9;
+  --st-good-ink: #0a6b0a; --st-warn-ink: #8a5d00; --st-serious-ink: #9a3d17; --st-critical-ink: #a32424;
+  /* chart (validated categorical slots) */
+  --chart-surface: #fcfcfb; --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100;
+  --grid: #e1e0d9; --axis: #898781;
+  --sidebar-w: 260px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0b1210; --surface: rgba(22,30,28,.86); --surface-solid: #141c1a; --surface-2: #18211f;
+    --border: rgba(255,255,255,.08); --border-strong: rgba(255,255,255,.16);
+    --text: #eef2f1; --text-2: #c2ccc9; --muted: #8fa09b; --brand-50: #0f2a22; --brand-100: #134e3a; --accent-soft: #3a2414;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.3);
+    --st-good-bg: #12301a; --st-warn-bg: #352a10; --st-serious-bg: #3a2218; --st-critical-bg: #3a1a1a;
+    --st-good-ink: #6fdc6f; --st-warn-ink: #ffd166; --st-serious-ink: #f5a585; --st-critical-ink: #f08a8a;
+    --chart-surface: #1a1a19; --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+    --grid: #2c2c2a; --axis: #898781;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1210; --surface: rgba(22,30,28,.86); --surface-solid: #141c1a; --surface-2: #18211f;
+  --border: rgba(255,255,255,.08); --border-strong: rgba(255,255,255,.16);
+  --text: #eef2f1; --text-2: #c2ccc9; --muted: #8fa09b; --brand-50: #0f2a22; --brand-100: #134e3a; --accent-soft: #3a2414;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.3);
+  --st-good-bg: #12301a; --st-warn-bg: #352a10; --st-serious-bg: #3a2218; --st-critical-bg: #3a1a1a;
+  --st-good-ink: #6fdc6f; --st-warn-ink: #ffd166; --st-serious-ink: #f5a585; --st-critical-ink: #f08a8a;
+  --chart-surface: #1a1a19; --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+  --grid: #2c2c2a; --axis: #898781;
+}
+
+/* =====================================================================
+   BASE
+   ===================================================================== */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Kanit', system-ui, -apple-system, 'Segoe UI', sans-serif; font-weight: 300; font-size: 15px; line-height: 1.55;
+  color: var(--text); background: var(--bg);
+  background-image: radial-gradient(1200px 600px at -10% -10%, rgba(16,185,129,.10), transparent 60%), radial-gradient(900px 500px at 110% 0%, rgba(249,115,22,.06), transparent 60%);
+  background-attachment: fixed; min-height: 100vh; overflow-x: hidden;
+}
+h1, h2, h3, h4 { font-weight: 500; margin: 0; line-height: 1.3; }
+a { color: var(--brand-600); }
+button, input, select, textarea { font: inherit; color: inherit; }
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.nowrap { white-space: nowrap; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* =====================================================================
+   LOGIN
+   ===================================================================== */
+#loginView { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+.login-card { width: 100%; max-width: 420px; background: var(--surface); backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow-lg); padding: 32px 28px; }
+.login-logo { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; background: linear-gradient(135deg, var(--brand-600), var(--brand-900)); color: #fff; font-size: 28px; margin-bottom: 16px; box-shadow: 0 10px 24px rgba(5,150,105,.35); }
+.login-card h1 { font-size: 22px; }
+.login-card .sub { color: var(--muted); margin: 4px 0 24px; font-size: 14px; }
+.pdpa-note { margin-top: 18px; font-size: 12px; color: var(--muted); display: flex; gap: 8px; }
+
+/* =====================================================================
+   LAYOUT
+   ===================================================================== */
+#appView { display: flex; min-height: 100vh; }
+.sidebar { position: fixed; inset: 0 auto 0 0; width: var(--sidebar-w); background: linear-gradient(180deg, #06392c 0%, #0f172a 100%); color: #e2f5ee; display: flex; flex-direction: column; z-index: 40; transition: width .25s ease, transform .25s ease; }
+.sidebar .brand { display: flex; align-items: center; gap: 12px; padding: 20px 18px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.sidebar .brand .logo { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg, var(--brand-500), var(--brand-700)); color: #fff; font-size: 18px; }
+.sidebar .brand b { display: block; font-weight: 500; font-size: 15px; letter-spacing: .2px; }
+.sidebar .brand small { color: #9fd9c4; font-size: 12px; }
+.nav { flex: 1; overflow-y: auto; padding: 12px 10px; }
+.nav .group { font-size: 11px; color: #7fb9a5; text-transform: uppercase; letter-spacing: 1px; padding: 14px 12px 6px; }
+.nav a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin: 2px 0; border-radius: 10px; color: #d6eee6; text-decoration: none; font-size: 14.5px; white-space: nowrap; transition: background .15s; }
+.nav a i { width: 20px; text-align: center; font-size: 15px; color: #8fd8bd; }
+.nav a:hover { background: rgba(255,255,255,.06); }
+.nav a.active { background: linear-gradient(90deg, rgba(16,185,129,.28), rgba(16,185,129,.08)); color: #fff; box-shadow: inset 3px 0 0 var(--brand-500); }
+.nav a .count { margin-left: auto; background: var(--accent); color: #fff; font-size: 11px; border-radius: 999px; padding: 0 7px; min-width: 20px; text-align: center; }
+.sidebar .foot { padding: 12px 14px; border-top: 1px solid rgba(255,255,255,.08); font-size: 12px; color: #8fbfb0; }
+body.collapsed .sidebar { width: 76px; }
+body.collapsed .sidebar .brand div, body.collapsed .nav a span, body.collapsed .nav .group, body.collapsed .nav a .count, body.collapsed .sidebar .foot { display: none; }
+body.collapsed .main { margin-left: 76px; }
+.main { flex: 1; margin-left: var(--sidebar-w); min-width: 0; transition: margin-left .25s ease; display: flex; flex-direction: column; }
+.topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; padding: 12px 24px; background: var(--surface); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+.topbar h2 { font-size: 18px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icon-btn { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-solid); display: grid; place-items: center; cursor: pointer; color: var(--text-2); transition: all .15s; }
+.icon-btn:hover { color: var(--brand-600); border-color: var(--brand-500); }
+.user-chip { display: flex; align-items: center; gap: 10px; padding: 4px 6px 4px 4px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-solid); cursor: pointer; }
+.user-chip .av { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #fb923c); color: #fff; display: grid; place-items: center; font-weight: 500; }
+.user-chip .meta { line-height: 1.15; padding-right: 8px; }
+.user-chip .meta b { font-weight: 500; font-size: 13px; display: block; }
+.user-chip .meta small { font-size: 11px; color: var(--muted); }
+.content { padding: 24px; flex: 1; width: 100%; max-width: 1480px; margin: 0 auto; }
+.bottom-nav { display: none; }
+.backdrop { display: none; }
+
+/* =====================================================================
+   COMPONENTS
+   ===================================================================== */
+.card { background: var(--surface); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; min-width: 0; }
+.card + .card { margin-top: 16px; }
+.grid > .card + .card { margin-top: 0; }
+.grid + .card, .kpis + .card { margin-top: 16px; }
+.card-h { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.card-h h3 { font-size: 16px; flex: 1; min-width: 160px; }
+.card-h .sub { font-size: 12px; color: var(--muted); width: 100%; margin-top: -8px; }
+.grid { display: grid; gap: 16px; }
+.g-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.kpi { position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 16px 14px; }
+.kpi .ic { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; background: var(--brand-50); color: var(--brand-600); margin-bottom: 10px; }
+.kpi.accent .ic { background: var(--accent-soft); color: var(--accent); }
+.kpi.navy .ic { background: rgba(15,23,42,.07); color: var(--text); }
+.kpi .lbl { font-size: 13px; color: var(--text-2); }
+.kpi .val { font-size: 28px; font-weight: 500; line-height: 1.2; margin-top: 2px; }
+.kpi .val small { font-size: 14px; color: var(--muted); font-weight: 300; margin-left: 4px; }
+.kpi .def { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 16px; border-radius: 11px; border: 1px solid transparent; cursor: pointer; font-weight: 400; font-size: 14px; transition: all .15s; white-space: nowrap; text-decoration: none; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn-primary { background: linear-gradient(135deg, var(--brand-600), var(--brand-700)); color: #fff; box-shadow: 0 6px 16px rgba(5,150,105,.25); }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.06); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-ghost { background: var(--surface-solid); border-color: var(--border-strong); color: var(--text); }
+.btn-ghost:hover { border-color: var(--brand-500); color: var(--brand-600); }
+.btn-danger { background: var(--st-critical); color: #fff; }
+.btn-sm { padding: 6px 11px; font-size: 13px; border-radius: 9px; }
+.btn-block { width: 100%; }
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.toolbar .grow { flex: 1; min-width: 200px; }
+.filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+label.f { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 4px; }
+label.f .req { color: var(--st-critical); }
+.input, select.input, textarea.input { width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--surface-solid); outline: none; transition: border .15s, box-shadow .15s; min-height: 40px; }
+textarea.input { min-height: 72px; resize: vertical; }
+.input:focus { border-color: var(--brand-500); box-shadow: 0 0 0 3px rgba(16,185,129,.18); }
+.input.invalid { border-color: var(--st-critical); }
+.search { position: relative; }
+.search i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+.search .input { padding-left: 36px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.form-grid .full { grid-column: 1 / -1; }
+.hint { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 10px; overflow: hidden; background: var(--surface-solid); }
+.seg label { padding: 8px 12px; cursor: pointer; font-size: 13.5px; border-right: 1px solid var(--border); display: flex; gap: 6px; align-items: center; }
+.seg label:last-child { border-right: 0; }
+.seg input { display: none; }
+.seg input:checked + span { color: #fff; }
+.seg label:has(input:checked) { background: var(--brand-600); color: #fff; }
+.seg label.fail:has(input:checked) { background: var(--st-critical); }
+.seg label.na:has(input:checked) { background: #64748b; }
+.table-wrap { width: 100%; overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+table.t { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface-solid); }
+table.t th { text-align: left; font-weight: 500; font-size: 13px; color: var(--text-2); background: var(--surface-2); padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; position: sticky; top: 0; }
+table.t td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+table.t tr:last-child td { border-bottom: 0; }
+table.t tr.click { cursor: pointer; }
+table.t tr.click:hover td { background: var(--brand-50); }
+table.t tr.void td { opacity: .5; text-decoration: line-through; }
+.badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 2px 9px; border-radius: 999px; font-weight: 400; white-space: nowrap; border: 1px solid transparent; }
+.b-green { background: var(--st-good-bg); color: var(--st-good-ink); }
+.b-yellow { background: var(--st-warn-bg); color: var(--st-warn-ink); }
+.b-orange { background: var(--st-serious-bg); color: var(--st-serious-ink); }
+.b-red { background: var(--st-critical-bg); color: var(--st-critical-ink); }
+.b-gray { background: var(--surface-2); color: var(--text-2); border-color: var(--border); }
+.b-brand { background: var(--brand-50); color: var(--brand-700); }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: 0 0 9px; }
+.dot.green { background: var(--st-good); } .dot.yellow { background: var(--st-warn); } .dot.orange { background: var(--st-serious); } .dot.red { background: var(--st-critical); }
+.empty { text-align: center; padding: 40px 16px; color: var(--muted); }
+.empty i { font-size: 34px; color: var(--brand-500); opacity: .6; margin-bottom: 10px; display: block; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; }
+.tabs button { background: none; border: 0; padding: 10px 14px; cursor: pointer; color: var(--text-2); border-bottom: 2px solid transparent; white-space: nowrap; font-size: 14px; }
+.tabs button.active { color: var(--brand-700); border-bottom-color: var(--brand-600); font-weight: 500; }
+.alert-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-solid); margin-bottom: 8px; border-left-width: 4px; }
+.alert-item.red { border-left-color: var(--st-critical); } .alert-item.orange { border-left-color: var(--st-serious); } .alert-item.yellow { border-left-color: var(--st-warn); } .alert-item.green { border-left-color: var(--st-good); }
+.alert-item .body { flex: 1; min-width: 0; }
+.alert-item .body b { font-weight: 500; }
+.profile-head { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.profile-head .av { width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center; font-size: 26px; color: #fff; background: linear-gradient(135deg, var(--brand-500), var(--brand-800, #065f46)); }
+.profile-head .av.girl { background: linear-gradient(135deg, #f472b6, #db2777); }
+.profile-head h2 { font-size: 22px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.kv { display: grid; grid-template-columns: 160px 1fr; gap: 6px 14px; font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; word-break: break-word; }
+.chart-box { position: relative; height: 260px; }
+.chart-box.tall { height: 320px; }
+.legend-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+.steps { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.steps .s { padding: 6px 12px; border-radius: 999px; font-size: 13px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+.steps .s.on { background: var(--brand-600); color: #fff; border-color: transparent; }
+.dropzone { display: block; width: 100%; border: 2px dashed var(--border-strong); border-radius: 16px; padding: 30px 16px; text-align: center; cursor: pointer; background: var(--surface-2); transition: all .15s; }
+.dropzone:hover, .dropzone.drag { border-color: var(--brand-500); background: var(--brand-50); }
+.dropzone i { font-size: 36px; color: var(--brand-600); }
+.stat-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.stat-row .st { flex: 1; min-width: 130px; padding: 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+.stat-row .st b { display: block; font-size: 22px; font-weight: 500; }
+.notice { padding: 12px 14px; border-radius: 12px; background: var(--brand-50); color: var(--text); border: 1px solid var(--border); font-size: 13.5px; display: flex; gap: 10px; margin-bottom: 14px; }
+.notice.warn { background: var(--st-warn-bg); }
+.notice.danger { background: var(--st-critical-bg); }
+.notice i { margin-top: 3px; }
+
+/* Modal */
+.modal { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; background: rgba(2,6,23,.5); backdrop-filter: blur(3px); overflow-y: auto; }
+.modal .box { width: 100%; max-width: 760px; background: var(--surface-solid); border-radius: 20px; box-shadow: var(--shadow-lg); border: 1px solid var(--border); animation: pop .18s ease; }
+.modal .box.sm { max-width: 460px; }
+.modal .mh { display: flex; align-items: center; gap: 10px; padding: 18px 20px; border-bottom: 1px solid var(--border); }
+.modal .mh h3 { flex: 1; font-size: 17px; }
+.modal .mb { padding: 20px; }
+.modal .mf { display: flex; gap: 10px; justify-content: flex-end; padding: 14px 20px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+@keyframes pop { from { transform: translateY(8px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Loading */
+#loader { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; background: rgba(2,6,23,.25); backdrop-filter: blur(2px); }
+.spinner { width: 46px; height: 46px; border-radius: 50%; border: 4px solid rgba(16,185,129,.25); border-top-color: var(--brand-600); animation: spin .8s linear infinite; }
+.loader-box { background: var(--surface-solid); padding: 22px 28px; border-radius: 18px; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 14px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.skeleton { height: 14px; border-radius: 6px; background: linear-gradient(90deg, var(--surface-2), var(--border), var(--surface-2)); background-size: 200% 100%; animation: sk 1.2s infinite; margin: 8px 0; }
+@keyframes sk { to { background-position: -200% 0; } }
+.conn { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.swal2-popup { font-family: 'Kanit', sans-serif !important; border-radius: 18px !important; }
+.mobile-cards { display: none; }
+.child-card { display: flex; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-solid); margin-bottom: 8px; cursor: pointer; align-items: center; }
+.child-card .body { flex: 1; min-width: 0; }
+.child-card .body b { font-weight: 500; }
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 1100px) { .g-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .g-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 860px) {
+  .sidebar { transform: translateX(-100%); width: 280px !important; }
+  body.nav-open .sidebar { transform: none; }
+  body.nav-open .backdrop { display: block; position: fixed; inset: 0; background: rgba(2,6,23,.45); z-index: 35; }
+  body.collapsed .sidebar .brand div, body.collapsed .nav a span, body.collapsed .nav .group, body.collapsed .sidebar .foot { display: initial; }
+  .main, body.collapsed .main { margin-left: 0; }
+  .topbar { padding: 10px 16px; }
+  .user-chip .meta { display: none; }
+  .content { padding: 16px 16px 96px; }
+  .g-2, .g-3, .g-4 { grid-template-columns: minmax(0, 1fr); }
+  .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .kpi { padding: 12px; } .kpi .val { font-size: 22px; } .kpi .ic { width: 32px; height: 32px; margin-bottom: 6px; }
+  .kv { grid-template-columns: 120px 1fr; }
+  .bottom-nav { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; background: var(--surface-solid); border-top: 1px solid var(--border); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow: 0 -6px 20px rgba(15,23,42,.08); }
+  .bottom-nav a { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--muted); text-decoration: none; padding: 4px 0; }
+  .bottom-nav a i { font-size: 18px; }
+  .bottom-nav a.active { color: var(--brand-600); }
+  .bottom-nav a.fab i { width: 46px; height: 46px; margin-top: -22px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--accent), #ea580c); box-shadow: 0 8px 20px rgba(249,115,22,.4); }
+  .hide-m { display: none !important; }
+  .mobile-cards { display: block; }
+  .desk-table { display: none; }
+  .modal { padding: 0; align-items: flex-end; }
+  .modal .box { border-radius: 20px 20px 0 0; max-height: 94vh; overflow-y: auto; }
+  .chart-box { height: 230px; }
+}
+@media print {
+  body { background: #fff !important; color: #000; }
+  .sidebar, .topbar, .bottom-nav, .toolbar, .filters, .no-print, .tabs, #loader { display: none !important; }
+  .main { margin: 0 !important; }
+  .content { padding: 0; max-width: none; }
+  .card { box-shadow: none; border: 0; padding: 0; background: #fff; }
+  .table-wrap { overflow: visible; border: 0; }
+  table.t { font-size: 11px; } table.t th { position: static; }
+  .print-head { display: block !important; }
+}
+.print-head { display: none; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     LOGIN VIEW
+     ================================================================ -->
+<section id="loginView" class="hidden">
+  <form class="login-card" id="loginForm" autocomplete="on">
+    <div class="login-logo"><i class="fa-solid fa-children"></i></div>
+    <h1>Smart Child Health</h1>
+    <div class="sub">ระบบบริหารจัดการสุขภาพและพัฒนาการเด็กปฐมวัย 0–5 ปี<br>รพ.สต.บึงเนียม อ.เมือง จ.ขอนแก่น</div>
+    <div style="margin-bottom:12px">
+      <label class="f" for="lgUser">ชื่อผู้ใช้</label>
+      <div class="search"><i class="fa-regular fa-user"></i><input class="input" id="lgUser" name="username" autocomplete="username" required></div>
+    </div>
+    <div style="margin-bottom:18px">
+      <label class="f" for="lgPass">รหัสผ่าน</label>
+      <div class="search"><i class="fa-solid fa-lock"></i><input class="input" id="lgPass" name="password" type="password" autocomplete="current-password" required></div>
+    </div>
+    <button class="btn btn-primary btn-block" type="submit" id="lgBtn"><i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ</button>
+    <div id="apiWarn" class="notice warn hidden" style="margin-top:14px"><i class="fa-solid fa-triangle-exclamation"></i><div>ยังไม่ได้กำหนด <b>API_URL</b> ในไฟล์ index.html — กรุณาใส่ URL ของ Google Apps Script Web App (ดูคู่มือติดตั้ง)</div></div>
+    <div class="pdpa-note"><i class="fa-solid fa-shield-halved"></i><span>ข้อมูลเด็กและข้อมูลสุขภาพเป็นข้อมูลส่วนบุคคลตาม พ.ร.บ.คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 ใช้เพื่อการดูแลสุขภาพเท่านั้น การเข้าใช้งานทุกครั้งถูกบันทึก</span></div>
+  </form>
+</section>
+
+<!-- ================================================================
+     APP VIEW
+     ================================================================ -->
+<section id="appView" class="hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="logo"><i class="fa-solid fa-children"></i></div><div><b>Smart Child Health</b><small>รพ.สต.บึงเนียม</small></div></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="foot"><span id="verText">v1.0.0</span> · <span class="conn" id="connState"><span class="dot green"></span> เชื่อมต่อแล้ว</span></div>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="btnMenu" title="ยุบ/ขยายเมนู" aria-label="เมนู"><i class="fa-solid fa-bars"></i></button>
+      <h2 id="pageTitle">Dashboard</h2>
+      <button class="icon-btn" id="btnRefresh" title="รีเฟรชข้อมูล" aria-label="รีเฟรช"><i class="fa-solid fa-rotate"></i></button>
+      <button class="icon-btn" id="btnTheme" title="สลับโหมดสว่าง/มืด" aria-label="ธีม"><i class="fa-solid fa-circle-half-stroke"></i></button>
+      <div class="user-chip" id="userChip" title="บัญชีผู้ใช้"><div class="av" id="userAv">A</div><div class="meta"><b id="userName">-</b><small id="userRole">-</small></div></div>
+    </header>
+    <main class="content" id="view"></main>
+  </div>
+  <nav class="bottom-nav" id="bottomNav"></nav>
+</section>
+
+<div id="modalRoot"></div>
+<div id="loader" class="hidden"><div class="loader-box"><div class="spinner"></div><div id="loaderText">กำลังโหลด...</div></div></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   1. CONFIGURATION — ใส่ URL ของ Google Apps Script Web App ที่นี่
+   ===================================================================== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbyoGLYvTX_Qjxrx-AAR1agV2LnVysvL8oKOMzFt6_UCqK5i2ik5d-5VNoi-_tlSxkgj/exec';
+const API_TIMEOUT_MS = 45000;  // GAS cold start อาจใช้เวลานาน
+const API_RETRIES = 2;
+const APP_VERSION = '1.0.0';
+
+/* =====================================================================
+   2. UTILITIES
+   ===================================================================== */
+const U = {
+  esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); },
+  uuid() { return (crypto.randomUUID ? crypto.randomUUID() : 'r' + Date.now() + Math.random().toString(16).slice(2)); },
+  sleep(ms) { return new Promise(r => setTimeout(r, ms)); },
+  debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; },
+  todayISO() { const d = new Date(Date.now() + 7 * 3600000); return d.toISOString().slice(0, 10); },
+  isoToUTC(s) { const p = s.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); },
+  utcToISO(t) { return new Date(t).toISOString().slice(0, 10); },
+  addDays(iso, n) { return U.utcToISO(U.isoToUTC(iso) + n * 86400000); },
+  addMonths(iso, n) {
+    const p = iso.split('-').map(Number); let y = p[0], m = p[1] - 1 + n;
+    y += Math.floor(m / 12); m = ((m % 12) + 12) % 12;
+    const dim = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    return U.utcToISO(Date.UTC(y, m, Math.min(p[2], dim)));
+  },
+  daysBetween(a, b) { return Math.round((U.isoToUTC(b) - U.isoToUTC(a)) / 86400000); },
+  age(birth, ref) {
+    if (!birth || !ref) return null;
+    const b = birth.split('-').map(Number), r = ref.split('-').map(Number);
+    let y = r[0] - b[0], m = r[1] - b[1], d = r[2] - b[2];
+    if (d < 0) { m--; d += new Date(Date.UTC(r[0], r[1] - 1, 0)).getUTCDate(); }
+    if (m < 0) { y--; m += 12; }
+    return { y, m, d, totalMonths: y * 12 + m, days: U.daysBetween(birth, ref), text: `${y} ปี ${m} เดือน ${d} วัน` };
+  },
+  TH_M: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
+  TH_MF: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'],
+  fmtDate(iso) { if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return iso || '-'; const [y, m, d] = iso.slice(0, 10).split('-').map(Number); return `${d} ${U.TH_M[m - 1]} ${String(y + 543).slice(2)}`; },
+  fmtDateTime(iso) { if (!iso) return '-'; const d = new Date(iso); if (isNaN(d)) return iso; const t = new Date(d.getTime() + 7 * 3600000).toISOString(); return U.fmtDate(t.slice(0, 10)) + ' ' + t.slice(11, 16); },
+  monthLabel(ym) { return U.TH_M[+ym.slice(5, 7) - 1] + ' ' + String(+ym.slice(0, 4) + 543).slice(2); },
+  fiscalYear(iso) { const y = +iso.slice(0, 4), m = +iso.slice(5, 7); return (m >= 10 ? y + 1 : y) + 543; },
+  pct(a, b) { return b ? Math.round(a * 1000 / b) / 10 : 0; },
+  sexText(s) { return s === '1' ? 'ชาย' : s === '2' ? 'หญิง' : '-'; },
+  vName(vhid) { const v = (S.meta?.villages || []).find(x => x.vhid === vhid); return v ? v.village_name : (vhid ? 'หมู่ที่ ' + Number(vhid) : '-'); },
+  maskCid(c) { c = String(c || ''); return c.length === 13 ? c[0] + '-xxxx-xxxxx-' + c.slice(10, 12) + '-' + c[12] : c; },
+  css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); },
+  formData(form) {
+    const o = {};
+    new FormData(form).forEach((v, k) => { o[k] = typeof v === 'string' ? v.trim() : v; });
+    return o;
+  }
+};
+
+/* =====================================================================
+   3. STATE & SESSION
+   (เก็บ token ใน sessionStorage เท่านั้น — ข้อมูลหลักไม่ถูกเก็บในเบราว์เซอร์)
+   ===================================================================== */
+const S = { token: null, user: null, meta: null, children: null, dash: null, charts: {}, route: '' };
+const Pref = { // การตั้งค่าหน้าจอ (ไม่ใช่ข้อมูลส่วนบุคคล)
+  get(k, d) { try { const v = localStorage.getItem('sch_pref_' + k); return v == null ? d : v; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('sch_pref_' + k, v); } catch (e) { /* ignore */ } }
+};
+const Session = {
+  load() { try { S.token = sessionStorage.getItem('sch_token'); } catch (e) { S.token = null; } },
+  save(token) { S.token = token; try { sessionStorage.setItem('sch_token', token); } catch (e) { /* ignore */ } },
+  clear() { S.token = null; S.user = null; S.meta = null; S.children = null; S.dash = null; try { sessionStorage.removeItem('sch_token'); } catch (e) { /* ignore */ } }
+};
+
+/* =====================================================================
+   4. API LAYER
+   - POST แบบ text/plain (simple request → ไม่มี CORS preflight) ไปยัง GAS Web App
+   - อ่านผลตอบกลับจริง (ไม่ใช้ no-cors) → ยืนยันการบันทึกจากเซิร์ฟเวอร์เท่านั้น
+   - Timeout + Retry; คำขอเขียนมี requestId เพื่อป้องกันบันทึกซ้ำเมื่อ retry
+   - ถ้าเปิดผ่าน GAS HtmlService (API_URL ว่าง) จะใช้ google.script.run
+   ===================================================================== */
+class ApiError extends Error { constructor(code, message, details) { super(message); this.code = code; this.details = details; } }
+const API = {
+  get mode() { return API_URL ? 'fetch' : (window.google && google.script && google.script.run ? 'gas' : 'none'); },
+  async call(action, payload = {}, opt = {}) {
+    if (API.mode === 'none') throw new ApiError('CONFIG', 'ยังไม่ได้กำหนด API_URL ในไฟล์ index.html');
+    const req = { action, payload, token: S.token };
+    if (opt.write) req.requestId = U.uuid();
+    let lastErr;
+    const retries = opt.retries ?? API_RETRIES;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const res = await (API.mode === 'gas' ? API.viaGas(req) : API.viaFetch(req, opt.timeout || API_TIMEOUT_MS));
+        setConn(true);
+        if (!res || typeof res.ok !== 'boolean') throw new ApiError('BAD_RESPONSE', 'ผลตอบกลับจากเซิร์ฟเวอร์ไม่ถูกต้อง');
+        if (!res.ok) {
+          const e = new ApiError(res.error.code, res.error.message, res.error.details);
+          if (e.code === 'AUTH_REQUIRED' && action !== 'login') { App.forceLogout(e.message); }
+          if (e.code === 'MUST_CHANGE_PASSWORD') { App.forceChangePassword(); }
+          throw e;
+        }
+        return res.data;
+      } catch (e) {
+        lastErr = e;
+        if (!(e instanceof ApiError) || !e.retryable || attempt === retries) break;
+        await U.sleep(800 * Math.pow(2, attempt));
+      }
+    }
+    if (lastErr && lastErr.retryable) setConn(false);
+    throw lastErr;
+  },
+  async viaFetch(req, timeout) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeout);
+    let resp, text;
+    try {
+      resp = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(req), signal: ctrl.signal });
+      text = await resp.text();
+    } catch (e) {
+      const err = new ApiError(e.name === 'AbortError' ? 'TIMEOUT' : 'NETWORK', e.name === 'AbortError' ? 'เซิร์ฟเวอร์ตอบสนองช้าเกินกำหนด' : 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ (ตรวจสอบอินเทอร์เน็ต/การ Deploy)');
+      err.retryable = true; throw err;
+    } finally { clearTimeout(timer); }
+    if (!resp.ok) { const err = new ApiError('HTTP_' + resp.status, 'เซิร์ฟเวอร์ตอบกลับผิดพลาด (HTTP ' + resp.status + ')'); err.retryable = resp.status >= 500; throw err; }
+    try { return JSON.parse(text); }
+    catch (e) { throw new ApiError('BAD_RESPONSE', 'เซิร์ฟเวอร์ไม่ได้ส่ง JSON กลับมา — ตรวจสอบการ Deploy Web App: Execute as "Me" และ Who has access "Anyone"'); }
+  },
+  viaGas(req) {
+    return new Promise((resolve, reject) => {
+      google.script.run.withSuccessHandler(s => { try { resolve(JSON.parse(s)); } catch (e) { reject(new ApiError('BAD_RESPONSE', 'ผลตอบกลับไม่ถูกต้อง')); } })
+        .withFailureHandler(e => { const err = new ApiError('NETWORK', e.message || 'เชื่อมต่อไม่สำเร็จ'); err.retryable = true; reject(err); })
+        .handleRequest(JSON.stringify(req));
+    });
+  }
+};
+function setConn(ok) {
+  const el = document.getElementById('connState');
+  if (el) el.innerHTML = ok ? '<span class="dot green"></span> เชื่อมต่อแล้ว' : '<span class="dot red"></span> ขาดการเชื่อมต่อ';
+}
+
+/* =====================================================================
+   5. UI HELPERS
+   ===================================================================== */
+const UI = {
+  loading(on, text) { const l = document.getElementById('loader'); document.getElementById('loaderText').textContent = text || 'กำลังโหลด...'; l.classList.toggle('hidden', !on); },
+  toast(msg, icon = 'success') { Swal.fire({ toast: true, position: 'top-end', icon, title: msg, showConfirmButton: false, timer: 2600, timerProgressBar: true }); },
+  error(e, title = 'เกิดข้อผิดพลาด') {
+    if (e && (e.code === 'AUTH_REQUIRED' || e.code === 'MUST_CHANGE_PASSWORD')) return;
+    const details = e && Array.isArray(e.details) && e.details.length > 1 ? '<ul style="text-align:left;margin:8px 0 0">' + e.details.map(d => '<li>' + U.esc(typeof d === 'string' ? d : JSON.stringify(d)) + '</li>').join('') + '</ul>' : '';
+    Swal.fire({ icon: 'error', title, html: U.esc(e && e.message || String(e)).replace(/\n/g, '<br>') + details, confirmButtonColor: '#059669' });
+  },
+  async confirm(title, text, confirmText = 'ยืนยัน', icon = 'question') {
+    const r = await Swal.fire({ icon, title, html: text, showCancelButton: true, confirmButtonText: confirmText, cancelButtonText: 'ยกเลิก', confirmButtonColor: '#059669', reverseButtons: true });
+    return r.isConfirmed;
+  },
+  empty(text = 'ไม่พบข้อมูล', icon = 'fa-folder-open') { return `<div class="empty"><i class="fa-regular ${icon}"></i>${U.esc(text)}</div>`; },
+  skeleton(n = 5) { return '<div class="card">' + Array.from({ length: n }, () => '<div class="skeleton"></div>').join('') + '</div>'; },
+  badge(text, color = 'gray', icon) { return `<span class="badge b-${color}">${icon ? `<i class="fa-solid ${icon}"></i>` : ''}${U.esc(text)}</span>`; },
+  levelBadge(level) {
+    const m = { red: ['เร่งด่วน', 'fa-circle-exclamation'], orange: ['ต้องติดตาม', 'fa-triangle-exclamation'], yellow: ['ใกล้ถึงกำหนด', 'fa-clock'], green: ['ปกติ', 'fa-circle-check'] };
+    const x = m[level] || m.green; return UI.badge(x[0], level, x[1]);
+  },
+  devBadge(st) {
+    const m = { NORMAL: 'green', SUSPECT: 'orange', WAIT_FOLLOW: 'orange', FOLLOW_OVERDUE: 'red', REFER: 'red', DUE: 'orange', MISSED: 'red', UPCOMING: 'yellow', NOT_DUE: 'gray', NO_DATA: 'gray' };
+    const ic = { green: 'fa-circle-check', orange: 'fa-triangle-exclamation', red: 'fa-circle-exclamation', yellow: 'fa-clock', gray: 'fa-minus' };
+    const c = m[st] || 'gray'; return UI.badge(DEV_TEXT[st] || st || '-', c, ic[c]);
+  },
+  /** columns: [{key,label,render?,cls?}] */
+  table(columns, rows, opt = {}) {
+    if (!rows || !rows.length) return UI.empty(opt.empty || 'ไม่พบข้อมูล');
+    const head = '<tr>' + columns.map(c => `<th class="${c.cls || ''}">${U.esc(c.label)}</th>`).join('') + '</tr>';
+    const body = rows.map((r, i) => `<tr data-i="${i}" class="${opt.onRow ? 'click' : ''} ${opt.rowClass ? opt.rowClass(r) : ''}">` + columns.map(c => `<td class="${c.cls || ''}">${c.render ? c.render(r) : U.esc(r[c.key])}</td>`).join('') + '</tr>').join('');
+    return `<div class="table-wrap ${opt.wrapCls || ''}"><table class="t"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+  },
+  bindRows(container, rows, fn) {
+    container.querySelectorAll('tr[data-i]').forEach(tr => tr.addEventListener('click', ev => { if (ev.target.closest('button,a,input,select')) return; fn(rows[+tr.dataset.i]); }));
+  },
+  /** แสดง modal ฟอร์ม; onSubmit(data) ต้องคืน Promise; ปิดเมื่อสำเร็จเท่านั้น */
+  modal({ title, body, submitText = 'บันทึก', onSubmit, size = '', onOpen, hideSubmit }) {
+    const root = document.getElementById('modalRoot');
+    const wrap = document.createElement('div');
+    wrap.className = 'modal';
+    wrap.innerHTML = `<form class="box ${size}" novalidate><div class="mh"><h3>${U.esc(title)}</h3><button type="button" class="icon-btn" data-close aria-label="ปิด"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="mb">${body}</div><div class="mf"><button type="button" class="btn btn-ghost" data-close>ปิด</button>${hideSubmit ? '' : `<button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> ${U.esc(submitText)}</button>`}</div></form>`;
+    root.appendChild(wrap);
+    const form = wrap.querySelector('form');
+    const close = () => wrap.remove();
+    wrap.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
+    wrap.addEventListener('mousedown', e => { if (e.target === wrap) close(); });
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = form.querySelector('button[type=submit]');
+      const data = U.formData(form);
+      const errs = Validate.form(form);
+      if (errs.length) { Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบถ้วน', html: errs.map(U.esc).join('<br>'), confirmButtonColor: '#059669' }); return; }
+      btn.disabled = true; const old = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+      try { const ok = await onSubmit(data, form); if (ok !== false) close(); }
+      catch (err) { UI.error(err, 'บันทึกไม่สำเร็จ'); }
+      finally { btn.disabled = false; btn.innerHTML = old; }
+    });
+    if (onOpen) onOpen(form, close);
+    const first = form.querySelector('input:not([type=hidden]):not([readonly]),select,textarea'); if (first && window.innerWidth > 860) first.focus();
+    return { form, close };
+  },
+  field(name, label, opt = {}) {
+    const req = opt.required ? ' <span class="req">*</span>' : '';
+    const attrs = `name="${name}" id="f_${name}" ${opt.required ? 'required' : ''} ${opt.attrs || ''}`;
+    const val = opt.value == null ? '' : U.esc(opt.value);
+    let input;
+    if (opt.type === 'select') input = `<select class="input" ${attrs}>${(opt.options || []).map(o => { const [v, t] = Array.isArray(o) ? o : [o, o]; return `<option value="${U.esc(v)}" ${String(v) === String(opt.value ?? '') ? 'selected' : ''}>${U.esc(t)}</option>`; }).join('')}</select>`;
+    else if (opt.type === 'textarea') input = `<textarea class="input" ${attrs} placeholder="${U.esc(opt.placeholder || '')}">${val}</textarea>`;
+    else input = `<input class="input" type="${opt.type || 'text'}" ${attrs} value="${val}" placeholder="${U.esc(opt.placeholder || '')}">`;
+    return `<div class="${opt.full ? 'full' : ''}"><label class="f" for="f_${name}">${U.esc(label)}${req}</label>${input}${opt.hint ? `<div class="hint">${U.esc(opt.hint)}</div>` : ''}</div>`;
+  }
+};
+
+/* =====================================================================
+   6. VALIDATION (ฝั่งหน้าเว็บ — เซิร์ฟเวอร์ตรวจซ้ำทุกครั้ง)
+   ===================================================================== */
+const Validate = {
+  form(form) {
+    const errs = [];
+    form.querySelectorAll('.input').forEach(el => el.classList.remove('invalid'));
+    form.querySelectorAll('[required]').forEach(el => {
+      if (!String(el.value || '').trim()) { el.classList.add('invalid'); const l = form.querySelector(`label[for="${el.id}"]`); errs.push('กรุณากรอก: ' + (l ? l.textContent.replace('*', '').trim() : el.name)); }
+    });
+    form.querySelectorAll('input[type=number]').forEach(el => { if (el.value && isNaN(Number(el.value))) { el.classList.add('invalid'); errs.push('ต้องเป็นตัวเลข: ' + el.name); } });
+    form.querySelectorAll('input[type=date]').forEach(el => {
+      if (el.value && el.dataset.nofuture !== undefined && el.value > U.todayISO()) { el.classList.add('invalid'); errs.push('วันที่ต้องไม่เป็นวันในอนาคต'); }
+      if (el.value && el.dataset.min && el.value < el.dataset.min) { el.classList.add('invalid'); errs.push('วันที่ต้องไม่ก่อนวันเกิด (' + U.fmtDate(el.dataset.min) + ')'); }
+    });
+    return errs;
+  },
+  cid(c) { if (!/^\d{13}$/.test(c)) return false; let s = 0; for (let i = 0; i < 12; i++) s += +c[i] * (13 - i); return (11 - (s % 11)) % 10 === +c[12]; }
+};
+
+/* =====================================================================
+   7. DOMAIN CONSTANTS (ตรงกับ Code.gs)
+   ===================================================================== */
+const ROLE_TEXT = { ADMIN: 'ผู้ดูแลระบบ', STAFF: 'เจ้าหน้าที่', VOLUNTEER: 'อสม.', VIEWER: 'ผู้ดูรายงาน' };
+const DEV_TEXT = { NORMAL: 'สมวัย', SUSPECT: 'สงสัยล่าช้า/ต้องกระตุ้น', WAIT_FOLLOW: 'รอติดตามผล', FOLLOW_OVERDUE: 'เกินกำหนดติดตาม', REFER: 'ล่าช้า/ส่งต่อ', DUE: 'ถึงกำหนดประเมิน', MISSED: 'ขาดการประเมิน', NOT_DUE: 'ยังไม่ถึงกำหนด', UPCOMING: 'ใกล้ถึงกำหนด', NO_DATA: 'ไม่มีข้อมูล' };
+const RES_TEXT = { PASS: 'ผ่าน', FAIL: 'ไม่ผ่าน', NA: 'ไม่ได้ประเมิน', NORMAL: 'สมวัย', SUSPECT: 'สงสัยล่าช้า', PENDING: 'รอประเมิน', DELAY: 'ล่าช้า', INVALID: 'ไม่มีผล/ผลไม่ถูกต้อง' };
+const DOMAINS = [['gm', 'GM ด้านการเคลื่อนไหว'], ['fm', 'FM ด้านกล้ามเนื้อมัดเล็กและสติปัญญา'], ['rl', 'RL ด้านการเข้าใจภาษา'], ['el', 'EL ด้านการใช้ภาษา'], ['ps', 'PS ด้านการช่วยเหลือตนเองและสังคม']];
+const FOLLOW_TYPE = { DEV_DELAY: 'ต้องกระตุ้นพัฒนาการ', MISSED_APPT: 'ไม่มาตามนัด', NOT_SCREENED: 'ยังไม่ได้รับการตรวจ/ประเมิน', GROWTH: 'ปัญหาการเจริญเติบโต', REFER: 'ต้องส่งต่อ', HOME_VISIT: 'ต้องเยี่ยมบ้าน', OTHER: 'อื่นๆ' };
+const FOLLOW_STATUS = { WAITING: 'รอติดตาม', SCHEDULED: 'นัดหมายแล้ว', IN_PROGRESS: 'อยู่ระหว่างติดตาม', SUCCESS: 'ติดตามสำเร็จ', REFERRED: 'ส่งต่อ', LOST: 'ขาดการติดต่อ' };
+const FOLLOW_METHODS = ['โทรศัพท์', 'เยี่ยมบ้าน', 'นัดมาที่ รพ.สต.', 'อสม. ติดตาม', 'LINE/ข้อความ', 'อื่นๆ'];
+const APPT_TYPE = { DSPM_FOLLOWUP: 'ประเมินพัฒนาการซ้ำ', DSPM_SCREEN: 'คัดกรองพัฒนาการ', GROWTH: 'ชั่งน้ำหนัก/วัดส่วนสูง', VACCINE: 'วัคซีน', HOME_VISIT: 'เยี่ยมบ้าน', OTHER: 'อื่นๆ' };
+const APPT_STATUS = { PENDING: 'รอ', DONE: 'มาตามนัด', MISSED: 'ขาดนัด', CANCELLED: 'ยกเลิก' };
+const SERVICE_TYPE = { VACCINE: 'วัคซีน', CHECKUP: 'ตรวจสุขภาพ', HEALTH_PROBLEM: 'ปัญหาสุขภาพ', REFER: 'ส่งต่อ' };
+const ALERT_TYPE = { DSPM_UPCOMING: 'ใกล้ถึงกำหนดประเมินพัฒนาการ', DSPM_DUE: 'ถึงกำหนดประเมินพัฒนาการ', DSPM_MISSED: 'ขาดการประเมินพัฒนาการ', DEV_SUSPECT: 'สงสัยพัฒนาการล่าช้า', DEV_FOLLOW_OVERDUE: 'เกินกำหนดติดตามหลังกระตุ้น', REFER: 'ต้องส่งต่อ', MISSED_APPT: 'ไม่มาตามนัด', GROWTH_CHECK: 'ข้อมูลน้ำหนัก/ส่วนสูงควรตรวจสอบ', GROWTH_CONCERN: 'การเจริญเติบโตนอกเกณฑ์', VISIT_DUE: 'ถึงกำหนดเยี่ยมบ้าน', CASE_OVERDUE: 'เคสติดตามเกินกำหนด' };
+const ALERT_TO_FOLLOW = { DSPM_MISSED: 'NOT_SCREENED', DSPM_DUE: 'NOT_SCREENED', DEV_SUSPECT: 'DEV_DELAY', DEV_FOLLOW_OVERDUE: 'DEV_DELAY', REFER: 'REFER', MISSED_APPT: 'MISSED_APPT', GROWTH_CHECK: 'GROWTH', GROWTH_CONCERN: 'GROWTH', VISIT_DUE: 'HOME_VISIT' };
+const AGE_GROUPS = ['0–<1 ปี', '1–<2 ปี', '2–<3 ปี', '3–<4 ปี', '4–<5 ปี', '5 ปีขึ้นไป'];
+const REPORTS = [
+  ['register', 'รายงานทะเบียนเด็ก 0–5 ปี'], ['village', 'รายงานเด็กแยกตามหมู่บ้าน'], ['growth', 'รายงานน้ำหนักและส่วนสูง'],
+  ['nutrition', 'รายงานภาวะโภชนาการ (รายบุคคล)'], ['nutrition_summary', 'รายงานภาวะโภชนาการ (สรุป)'], ['dspm', 'รายงานผลการประเมิน DSPM'],
+  ['suspect', 'รายงานเด็กสงสัยพัฒนาการล่าช้า'], ['stimulate', 'รายงานเด็กที่ต้องกระตุ้นพัฒนาการ'], ['followup', 'รายงานการติดตามเด็ก'],
+  ['visit', 'รายงานการเยี่ยมบ้าน'], ['missed', 'รายงานเด็กขาดนัด'], ['coverage', 'รายงานความครอบคลุมการให้บริการ'], ['monthly', 'รายงานผลการดำเนินงานรายเดือน/ปีงบประมาณ']
+];
+const AGG_REPORTS = ['village', 'nutrition_summary', 'coverage', 'monthly'];
+const SHEETS = ['Child_Register', 'Source_Screening', 'Growth_Records', 'Development_Records', 'Development_Items', 'Followup_Records', 'Home_Visit', 'Vaccination', 'Appointments', 'Villages', 'Import_History', 'Audit_Log', 'System_Config', 'Growth_Reference', 'DSPM_Item_Master'];
+const SOURCE_FIELDS = ['hoscode', 'hosname', 'pid', 'cid', 'name', 'lname', 'sex', 'birth', 'addr', 'check_vhid', 'vhid', 'nation', 'check_typearea', 'discharge', 'agemonth', 'date_start', 'date_end', 'date_serv_first', 'sp_first', 'result1', 'date_serv2', 'date_serv_last', 'sp_last', 'result2'];
+
+/* =====================================================================
+   8. NAVIGATION / ROUTER
+   ===================================================================== */
+const MENU = [
+  { group: 'ภาพรวม' },
+  { id: 'dashboard', icon: 'fa-chart-pie', label: 'Dashboard', roles: ['ADMIN', 'STAFF', 'VOLUNTEER', 'VIEWER'] },
+  { id: 'alerts', icon: 'fa-bell', label: 'แจ้งเตือนความเสี่ยง', roles: ['ADMIN', 'STAFF', 'VOLUNTEER'] },
+  { group: 'งานบริการ' },
+  { id: 'children', icon: 'fa-children', label: 'ทะเบียนเด็ก', roles: ['ADMIN', 'STAFF', 'VOLUNTEER'] },
+  { id: 'growth', icon: 'fa-weight-scale', label: 'น้ำหนัก/ส่วนสูง', roles: ['ADMIN', 'STAFF'] },
+  { id: 'development', icon: 'fa-puzzle-piece', label: 'ประเมินพัฒนาการ', roles: ['ADMIN', 'STAFF'] },
+  { id: 'followup', icon: 'fa-user-clock', label: 'การติดตาม', roles: ['ADMIN', 'STAFF', 'VOLUNTEER'] },
+  { id: 'visits', icon: 'fa-house-medical', label: 'เยี่ยมบ้าน', roles: ['ADMIN', 'STAFF', 'VOLUNTEER'] },
+  { id: 'vaccination', icon: 'fa-syringe', label: 'วัคซีน/บริการสุขภาพ', roles: ['ADMIN', 'STAFF'] },
+  { group: 'บริหาร' },
+  { id: 'villages', icon: 'fa-map-location-dot', label: 'รายหมู่บ้าน', roles: ['ADMIN', 'STAFF', 'VOLUNTEER', 'VIEWER'] },
+  { id: 'reports', icon: 'fa-file-lines', label: 'รายงาน', roles: ['ADMIN', 'STAFF', 'VOLUNTEER', 'VIEWER'] },
+  { id: 'import', icon: 'fa-file-import', label: 'นำเข้า Excel', roles: ['ADMIN'] },
+  { id: 'users', icon: 'fa-users-gear', label: 'ผู้ใช้งาน', roles: ['ADMIN'] },
+  { id: 'settings', icon: 'fa-gear', label: 'ข้อมูลและการตั้งค่า', roles: ['ADMIN'] }
+];
+const can = (...roles) => S.user && roles.includes(S.user.role);
+const Router = {
+  pages: {},
+  go(hash) { if (location.hash === hash) Router.render(); else location.hash = hash; },
+  async render() {
+    if (!S.user) return;
+    const [id, arg] = (location.hash.replace(/^#\/?/, '') || 'dashboard').split('/');
+    const item = MENU.find(m => m.id === id);
+    const page = Router.pages[id];
+    if (!page || (item && !item.roles.includes(S.user.role)) || (id === 'child' && !can('ADMIN', 'STAFF', 'VOLUNTEER'))) { location.hash = '#/dashboard'; return; }
+    S.route = id;
+    document.querySelectorAll('#nav a, #bottomNav a').forEach(a => a.classList.toggle('active', a.dataset.id === id || (id === 'child' && a.dataset.id === 'children')));
+    document.getElementById('pageTitle').textContent = page.title || (item && item.label) || '';
+    document.body.classList.remove('nav-open');
+    Object.values(S.charts).forEach(c => c.destroy()); S.charts = {};
+    // ใช้ container ใหม่ทุกครั้ง: หน้าที่โหลดค้าง (ผู้ใช้เปลี่ยนหน้าระหว่างรอ) จะเขียนลง node ที่ถูกถอดออกแล้ว ไม่ทับหน้าใหม่
+    const old = document.getElementById('view');
+    const view = old.cloneNode(false);
+    old.replaceWith(view);
+    view.innerHTML = UI.skeleton(6);
+    window.scrollTo(0, 0);
+    try { await page.render(view, arg ? decodeURIComponent(arg) : ''); }
+    catch (e) {
+      if (!view.isConnected) return;
+      view.innerHTML = `<div class="card">${UI.empty('โหลดข้อมูลไม่สำเร็จ: ' + (e.message || e), 'fa-face-frown')}<div style="text-align:center"><button class="btn btn-ghost" onclick="Router.render()"><i class="fa-solid fa-rotate"></i> ลองใหม่</button></div></div>`;
+      if (e.code !== 'AUTH_REQUIRED') console.error(e);
+    }
+  }
+};
+
+/* =====================================================================
+   9. APP SHELL
+   ===================================================================== */
+const App = {
+  async init() {
+    applyTheme(Pref.get('theme', ''));
+    if (Pref.get('collapsed', '0') === '1') document.body.classList.add('collapsed');
+    Session.load();
+    bindShell();
+    if (API.mode === 'none') document.getElementById('apiWarn').classList.remove('hidden');
+    if (S.token) {
+      UI.loading(true, 'กำลังตรวจสอบการเข้าสู่ระบบ...');
+      try { const r = await API.call('validateSession'); S.user = r.user; await App.start(); }
+      catch (e) { Session.clear(); App.showLogin(); }
+      finally { UI.loading(false); }
+    } else App.showLogin();
+  },
+  showLogin() { document.getElementById('appView').classList.add('hidden'); document.getElementById('loginView').classList.remove('hidden'); },
+  async start() {
+    if (S.user.must_change) { App.showLogin(); App.forceChangePassword(); return; }
+    document.getElementById('loginView').classList.add('hidden');
+    document.getElementById('appView').classList.remove('hidden');
+    document.getElementById('userName').textContent = S.user.full_name || S.user.username;
+    document.getElementById('userRole').textContent = ROLE_TEXT[S.user.role] || S.user.role;
+    document.getElementById('userAv').textContent = (S.user.full_name || S.user.username || '?').trim().charAt(0).toUpperCase();
+    document.getElementById('verText').textContent = 'v' + APP_VERSION;
+    S.meta = await API.call('getMeta');
+    buildNav();
+    if (!location.hash) location.hash = '#/dashboard'; else Router.render();
+  },
+  async login(username, password) {
+    const r = await API.call('login', { username, password }, { retries: 1 });
+    Session.save(r.token); S.user = r.user;
+    if (r.user.must_change) { App.forceChangePassword(); return; }
+    await App.start();
+  },
+  async logout() {
+    if (!(await UI.confirm('ออกจากระบบ?', 'ต้องการออกจากระบบใช่หรือไม่', 'ออกจากระบบ'))) return;
+    try { await API.call('logout', {}, { retries: 0 }); } catch (e) { /* ignore */ }
+    Session.clear(); location.hash = ''; App.showLogin();
+  },
+  forceLogout(msg) {
+    if (!S.token) return;
+    Session.clear(); App.showLogin();
+    document.getElementById('modalRoot').innerHTML = '';
+    Swal.fire({ icon: 'info', title: 'กรุณาเข้าสู่ระบบใหม่', text: msg, confirmButtonColor: '#059669' });
+  },
+  forceChangePassword() { openChangePassword(true); }
+};
+
+function bindShell() {
+  document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const u = document.getElementById('lgUser').value.trim(), p = document.getElementById('lgPass').value;
+    if (!u || !p) return;
+    const btn = document.getElementById('lgBtn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบ...';
+    try { await App.login(u, p); document.getElementById('lgPass').value = ''; }
+    catch (err) { UI.error(err, 'เข้าสู่ระบบไม่สำเร็จ'); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ'; }
+  });
+  document.getElementById('btnMenu').addEventListener('click', () => {
+    if (window.innerWidth <= 860) document.body.classList.toggle('nav-open');
+    else { document.body.classList.toggle('collapsed'); Pref.set('collapsed', document.body.classList.contains('collapsed') ? '1' : '0'); }
+  });
+  document.getElementById('backdrop').addEventListener('click', () => document.body.classList.remove('nav-open'));
+  document.getElementById('btnRefresh').addEventListener('click', async () => { S.children = null; S.dash = null; try { S.meta = await API.call('getMeta'); } catch (e) { /* handled */ } Router.render(); UI.toast('รีเฟรชข้อมูลแล้ว'); });
+  document.getElementById('btnTheme').addEventListener('click', () => {
+    const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = cur === 'dark' ? 'light' : 'dark'; applyTheme(next); Pref.set('theme', next);
+    if (S.route === 'dashboard' && S.dash) Pages.dashboard.draw();
+  });
+  document.getElementById('userChip').addEventListener('click', async () => {
+    const r = await Swal.fire({ title: U.esc(S.user.full_name || S.user.username), html: `<div class="muted">${U.esc(ROLE_TEXT[S.user.role])}${S.user.villages?.length ? ' · หมู่ ' + S.user.villages.map(U.esc).join(', ') : ''}</div>`,
+      showDenyButton: true, showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-key"></i> เปลี่ยนรหัสผ่าน', denyButtonText: '<i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ', cancelButtonText: 'ปิด', confirmButtonColor: '#059669', denyButtonColor: '#d03b3b' });
+    if (r.isConfirmed) openChangePassword(false); else if (r.isDenied) App.logout();
+  });
+  window.addEventListener('hashchange', () => Router.render());
+}
+function applyTheme(t) { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; }
+function buildNav() {
+  const items = MENU.filter(m => m.group || m.roles.includes(S.user.role));
+  const cleaned = items.filter((m, i) => !m.group || (items[i + 1] && !items[i + 1].group));
+  document.getElementById('nav').innerHTML = cleaned.map(m => m.group ? `<div class="group">${m.group}</div>` :
+    `<a href="#/${m.id}" data-id="${m.id}" title="${m.label}"><i class="fa-solid ${m.icon}"></i><span>${m.label}</span></a>`).join('');
+  const r = S.user.role;
+  const bn = r === 'VIEWER' ? [['dashboard', 'fa-chart-pie', 'หน้าหลัก'], ['villages', 'fa-map-location-dot', 'หมู่บ้าน'], ['reports', 'fa-file-lines', 'รายงาน'], ['', 'fa-bars', 'เมนู']]
+    : r === 'VOLUNTEER' ? [['dashboard', 'fa-chart-pie', 'หน้าหลัก'], ['children', 'fa-children', 'เด็ก'], ['visits', 'fa-house-medical', 'เยี่ยมบ้าน', 'fab'], ['followup', 'fa-user-clock', 'ติดตาม'], ['', 'fa-bars', 'เมนู']]
+      : [['dashboard', 'fa-chart-pie', 'หน้าหลัก'], ['children', 'fa-children', 'เด็ก'], ['quick', 'fa-plus', 'บันทึก', 'fab'], ['alerts', 'fa-bell', 'แจ้งเตือน'], ['', 'fa-bars', 'เมนู']];
+  const nav = document.getElementById('bottomNav');
+  nav.style.gridTemplateColumns = `repeat(${bn.length},1fr)`;
+  nav.innerHTML = bn.map(b => `<a href="${b[0] && b[0] !== 'quick' ? '#/' + b[0] : '#'}" data-id="${b[0]}" class="${b[3] || ''}"><i class="fa-solid ${b[1]}"></i>${b[2]}</a>`).join('');
+  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', e => {
+    if (a.dataset.id === '') { e.preventDefault(); document.body.classList.toggle('nav-open'); }
+    if (a.dataset.id === 'quick') { e.preventDefault(); quickAdd(); }
+  }));
+}
+async function quickAdd() {
+  const r = await Swal.fire({ title: 'บันทึกข้อมูล', input: 'select', inputOptions: { growth: 'ชั่งน้ำหนัก/วัดส่วนสูง', development: 'ประเมินพัฒนาการ', visits: 'เยี่ยมบ้าน', followup: 'ติดตามเด็ก', vaccination: 'วัคซีน/บริการสุขภาพ', child: 'ลงทะเบียนเด็กใหม่' }, showCancelButton: true, confirmButtonText: 'ไปต่อ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#059669' });
+  if (!r.isConfirmed) return;
+  if (r.value === 'child') openChildForm(); else Router.go('#/' + r.value);
+}
+
+function openChangePassword(forced) {
+  UI.modal({
+    title: forced ? 'กรุณาเปลี่ยนรหัสผ่านก่อนใช้งาน' : 'เปลี่ยนรหัสผ่าน', size: 'sm', submitText: 'เปลี่ยนรหัสผ่าน',
+    body: `${forced ? '<div class="notice warn"><i class="fa-solid fa-shield-halved"></i><div>บัญชีนี้ใช้รหัสผ่านเริ่มต้นหรือรหัสที่ผู้ดูแลตั้งให้ ต้องเปลี่ยนก่อนใช้งานระบบ</div></div>' : ''}
+      <div class="form-grid" style="grid-template-columns:1fr">
+      ${UI.field('oldPassword', 'รหัสผ่านเดิม', { type: 'password', required: true, attrs: 'autocomplete="current-password"' })}
+      ${UI.field('newPassword', 'รหัสผ่านใหม่', { type: 'password', required: true, attrs: 'autocomplete="new-password" minlength="8"', hint: 'อย่างน้อย 8 ตัวอักษร มีทั้งตัวอักษรภาษาอังกฤษและตัวเลข' })}
+      ${UI.field('confirm', 'ยืนยันรหัสผ่านใหม่', { type: 'password', required: true, attrs: 'autocomplete="new-password"' })}</div>`,
+    onSubmit: async d => {
+      if (d.newPassword !== d.confirm) throw new ApiError('VALIDATION', 'รหัสผ่านใหม่และการยืนยันไม่ตรงกัน');
+      if (d.newPassword.length < 8 || !/[A-Za-z]/.test(d.newPassword) || !/\d/.test(d.newPassword)) throw new ApiError('VALIDATION', 'รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร และมีทั้งตัวอักษรและตัวเลข');
+      const r = await API.call('changePassword', { oldPassword: d.oldPassword, newPassword: d.newPassword }, { write: true });
+      Session.save(r.token); S.user = r.user;
+      UI.toast('เปลี่ยนรหัสผ่านเรียบร้อย');
+      if (forced) await App.start();
+    }
+  });
+}
+
+/* =====================================================================
+   10. SHARED DATA LOADERS
+   ===================================================================== */
+async function loadChildren(force) {
+  if (!S.children || force) S.children = (await API.call('getChildList', {})).children;
+  return S.children;
+}
+function villageOptions(withAll = true, label = 'ทุกหมู่บ้าน') {
+  let vs = S.meta.villages || [];
+  if (S.user.role === 'VOLUNTEER') vs = vs.filter(v => S.user.villages.includes(v.vhid));
+  return (withAll ? [['', label]] : []).concat(vs.map(v => [v.vhid, `หมู่ ${Number(v.vhid)} ${v.village_name && !/^หมู่ที่/.test(v.village_name) ? v.village_name : ''}`.trim()]));
+}
+/** ช่องเลือกเด็ก: ค้นหาด้วยชื่อ/PID/CID — onPick(child) */
+async function childPicker(container, onPick, opt = {}) {
+  const kids = (await loadChildren()).filter(c => opt.includeInactive || c.active);
+  container.innerHTML = `<label class="f">เลือกเด็ก <span class="req">*</span></label>
+    <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input class="input" id="pickQ" placeholder="พิมพ์ชื่อ นามสกุล PID หรือ 4 หลักท้าย CID" autocomplete="off"></div>
+    <div id="pickRes" style="margin-top:8px"></div>`;
+  const q = container.querySelector('#pickQ'), res = container.querySelector('#pickRes');
+  const show = () => {
+    const s = q.value.trim().toLowerCase();
+    if (!s) { res.innerHTML = '<div class="hint">พิมพ์อย่างน้อย 1 ตัวอักษรเพื่อค้นหา (' + kids.length + ' คน)</div>'; return; }
+    const hits = kids.filter(c => (c.name + ' ' + c.lname + ' ' + c.pid + ' ' + c.cid).toLowerCase().includes(s)).slice(0, 8);
+    res.innerHTML = hits.length ? hits.map((c, i) => `<div class="child-card" data-i="${i}"><i class="fa-solid ${c.sex === '2' ? 'fa-person-dress' : 'fa-person'}" style="font-size:20px;color:var(--brand-600)"></i><div class="body"><b>${U.esc(c.name)} ${U.esc(c.lname)}</b><div class="small muted">PID ${U.esc(c.pid)} · ${U.esc(c.ageText)} · หมู่ ${U.esc(Number(c.vhid))}</div></div>${UI.devBadge(c.devStatus)}</div>`).join('') : UI.empty('ไม่พบเด็กที่ค้นหา');
+    res.querySelectorAll('.child-card').forEach(el => el.addEventListener('click', () => { const c = hits[+el.dataset.i]; q.value = `${c.name} ${c.lname} (PID ${c.pid})`; res.innerHTML = ''; onPick(c); }));
+  };
+  q.addEventListener('input', U.debounce(show, 150));
+  if (opt.pid) { const c = kids.find(k => k.pid === opt.pid) || (await loadChildren()).find(k => k.pid === opt.pid); if (c) { q.value = `${c.name} ${c.lname} (PID ${c.pid})`; onPick(c); } }
+  else show();
+}
+function exportXlsx(filename, columns, rows, sheetName = 'Report') {
+  const data = rows.map(r => { const o = {}; columns.forEach(c => { o[c.label] = r[c.key] ?? ''; }); return o; });
+  const ws = XLSX.utils.json_to_sheet(data, { header: columns.map(c => c.label) });
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
+  XLSX.writeFile(wb, filename);
+}
+
+/* =====================================================================
+   11. PAGES
+   ===================================================================== */
+const Pages = {};
+
+/* ---------------- DASHBOARD ---------------- */
+Pages.dashboard = {
+  title: 'Dashboard ภาพรวมสุขภาพเด็ก 0–5 ปี',
+  f: null,
+  async render(view) {
+    if (!S.dash) S.dash = await API.call('getDashboardData');
+    const d = S.dash;
+    const fyNow = U.fiscalYear(d.today);
+    if (!this.f) this.f = { ptype: 'fy', year: fyNow, month: '', vhid: '', age: '', sex: '', dev: '', follow: '' };
+    const years = []; for (let y = fyNow + 1; y >= fyNow - 4; y--) years.push(y);
+    const opt = (v, t, cur) => `<option value="${v}" ${String(cur) === String(v) ? 'selected' : ''}>${t}</option>`;
+    const f = this.f;
+    view.innerHTML = `
+      ${can('ADMIN') ? `<div class="toolbar no-print"><span class="small muted">${d.rows.length ? `ข้อมูลเด็กในระบบ ${d.rows.length} คน` : ''}</span><div class="grow"></div><a class="btn btn-primary" href="#/import"><i class="fa-solid fa-file-import"></i> นำเข้าไฟล์ Excel</a></div>` : ''}
+      ${!d.rows.length ? `<div class="notice warn"><i class="fa-solid fa-circle-info"></i><div>ยังไม่มีข้อมูลเด็กในระบบ ${can('ADMIN') ? '— กด <b>นำเข้าไฟล์ Excel</b> เพื่อนำเข้าทะเบียน 0–5 ปี' : '— กรุณาติดต่อผู้ดูแลระบบเพื่อนำเข้าทะเบียน'}</div></div>` : ''}
+      <div class="filters card" style="padding:14px" id="dashFilters">
+        <div><label class="f">ช่วงเวลา</label><select class="input" data-k="ptype">${opt('fy', 'ปีงบประมาณ', f.ptype)}${opt('cal', 'ปีปฏิทิน', f.ptype)}</select></div>
+        <div><label class="f">ปี (พ.ศ.)</label><select class="input" data-k="year">${years.map(y => opt(y, y, f.year)).join('')}</select></div>
+        <div><label class="f">เดือน</label><select class="input" data-k="month">${opt('', 'ทั้งปี', f.month)}${U.TH_MF.map((m, i) => opt(i + 1, m, f.month)).join('')}</select></div>
+        <div><label class="f">หมู่บ้าน</label><select class="input" data-k="vhid">${villageOptions().map(([v, t]) => opt(v, U.esc(t), f.vhid)).join('')}</select></div>
+        <div><label class="f">ช่วงอายุ</label><select class="input" data-k="age">${opt('', 'ทุกช่วงอายุ', f.age)}${AGE_GROUPS.map((a, i) => opt(i, a, f.age)).join('')}</select></div>
+        <div><label class="f">เพศ</label><select class="input" data-k="sex">${opt('', 'ทั้งหมด', f.sex)}${opt('1', 'ชาย', f.sex)}${opt('2', 'หญิง', f.sex)}</select></div>
+        <div><label class="f">สถานะพัฒนาการ</label><select class="input" data-k="dev">${opt('', 'ทั้งหมด', f.dev)}${Object.entries(DEV_TEXT).map(([k, t]) => opt(k, t, f.dev)).join('')}</select></div>
+        <div><label class="f">สถานะการติดตาม</label><select class="input" data-k="follow">${opt('', 'ทั้งหมด', f.follow)}${opt('need', 'ต้องติดตาม', f.follow)}${opt('case', 'มีเคสติดตามเปิดอยู่', f.follow)}${opt('missed', 'มีประวัติขาดนัด', f.follow)}${opt('none', 'ไม่มีประเด็นติดตาม', f.follow)}</select></div>
+      </div>
+      <div id="periodNote" class="small muted" style="margin:-6px 2px 12px"></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="grid g-2">
+        <div class="card"><div class="card-h"><h3>จำนวนเด็กแยกตามช่วงอายุ</h3></div><div class="chart-box"><canvas id="c1"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>จำนวนเด็กแยกตามเพศ</h3></div><div class="chart-box"><canvas id="c2"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>จำนวนเด็กแยกตามหมู่บ้าน</h3></div><div class="chart-box tall"><canvas id="c3"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>ผลการประเมินพัฒนาการ (เด็กที่ถึงกำหนดในช่วงเวลา)</h3></div><div class="chart-box tall"><canvas id="c4"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>แนวโน้มการชั่งน้ำหนักและวัดส่วนสูง</h3><div class="sub">จำนวนเด็ก (ไม่นับซ้ำในเดือน) ที่ได้รับการชั่ง/วัด รายเดือน</div></div><div class="chart-box"><canvas id="c5"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>แนวโน้มการติดตามเด็กกลุ่มเสี่ยง</h3><div class="sub">พบสงสัยล่าช้าใหม่ เทียบกับได้รับการประเมินซ้ำหลังกระตุ้น รายเดือน</div></div><div class="chart-box"><canvas id="c6"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>ความครอบคลุมการประเมินพัฒนาการ (ร้อยละ)</h3><div class="sub">แยกตามอายุเป้าหมาย: คัดกรองแล้ว ÷ เด็กที่ครบอายุเป้าหมายในช่วงเวลา (ไม่รวมที่ยังไม่ถึงกำหนด)</div></div><div class="chart-box"><canvas id="c7"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>สถานะการดำเนินงานรายเดือน</h3><div class="sub">จำนวนครั้งของบริการแต่ละประเภท</div></div><div class="chart-box"><canvas id="c8"></canvas></div></div>
+      </div>
+      <div class="card"><div class="card-h"><h3><i class="fa-solid fa-circle-info"></i> นิยามตัวชี้วัด</h3></div><div class="small muted" id="defs"></div></div>
+      <div class="small muted" style="margin-top:10px"><i class="fa-solid fa-shield-halved"></i> ${U.esc(d.note || '')} · ข้อมูล ณ ${U.fmtDateTime(d.generatedAt)}${d.scope !== 'ALL' ? ' · แสดงเฉพาะหมู่ที่รับผิดชอบ: ' + d.scope.map(U.esc).join(', ') : ''}</div>`;
+    view.querySelectorAll('#dashFilters select').forEach(s => s.addEventListener('change', () => { this.f[s.dataset.k] = s.value; this.draw(); }));
+    this.draw();
+  },
+  period() {
+    const f = this.f, y = Number(f.year);
+    let from, to;
+    if (f.ptype === 'fy') { from = (y - 544) + '-10-01'; to = (y - 543) + '-09-30'; }
+    else { from = (y - 543) + '-01-01'; to = (y - 543) + '-12-31'; }
+    if (f.month) {
+      const m = Number(f.month);
+      const cy = f.ptype === 'fy' ? (m >= 10 ? y - 544 : y - 543) : y - 543;
+      from = `${cy}-${String(m).padStart(2, '0')}-01`;
+      to = U.addDays(U.addMonths(from, 1), -1);
+    }
+    return { from, to };
+  },
+  compute() {
+    const d = S.dash, f = this.f, { from, to } = this.period(), today = d.today;
+    const capTo = to < today ? to : today;
+    const missedIds = new Set(d.events.filter(e => e.t === 'APPT' && e.s === 'MISSED').map(e => e.c));
+    const rows = d.rows.filter(r => r.active
+      && (!f.vhid || r.vhid === f.vhid) && (f.sex === '' || r.sex === f.sex) && (f.age === '' || String(r.ageGroup) === String(f.age))
+      && (!f.dev || r.devStatus === f.dev)
+      && (!f.follow || (f.follow === 'need' && r.needFollow) || (f.follow === 'case' && r.openCases > 0) || (f.follow === 'missed' && missedIds.has(r.id)) || (f.follow === 'none' && !r.needFollow && !r.openCases)));
+    const ids = new Set(rows.map(r => r.id));
+    const ev = d.events.filter(e => ids.has(e.c) && e.d >= from && e.d <= to);
+    const uniq = (pred) => new Set(ev.filter(pred).map(e => e.c)).size;
+    const eps = []; rows.forEach(r => r.episodes.forEach(e => { if (e.s >= from && e.s <= capTo) eps.push(Object.assign({ c: r.id }, e)); }));
+    const notYetDue = rows.reduce((n, r) => n + r.episodes.filter(e => e.s >= from && e.s <= to && e.s > today).length, 0);
+    const screened = eps.filter(e => e.fr);
+    const suspect = screened.filter(e => e.fr === 'SUSPECT');
+    const followDueOrDone = suspect.filter(e => e.ud || (e.due && e.due <= today));
+    const k = {
+      total: rows.length, boys: rows.filter(r => r.sex === '1').length, girls: rows.filter(r => r.sex === '2').length,
+      weighed: uniq(e => e.t === 'GROWTH' && e.w), measured: uniq(e => e.t === 'GROWTH' && e.h),
+      assessed: uniq(e => e.t === 'DSPM' || e.t === 'DSPM_OTHER'),
+      target: eps.length, screened: screened.length, normal: screened.filter(e => e.fr === 'NORMAL').length, suspect: suspect.length,
+      notAssessed: eps.filter(e => !e.fr && (e.st === 'MISSED' || e.st === 'DUE')).length, notYetDue,
+      followed: followDueOrDone.filter(e => e.ud).length, followBase: followDueOrDone.length,
+      needFollow: rows.filter(r => r.needFollow).length,
+      missedAppt: uniq(e => e.t === 'APPT' && e.s === 'MISSED'), missedApptCount: ev.filter(e => e.t === 'APPT' && e.s === 'MISSED').length,
+      visited: uniq(e => e.t === 'VISIT')
+    };
+    // monthly buckets
+    const months = []; for (let m = from.slice(0, 7); m <= to.slice(0, 7); m = U.addMonths(m + '-01', 1).slice(0, 7)) months.push(m);
+    const mb = {}; months.forEach(m => mb[m] = { w: new Set(), h: new Set(), sus: 0, fol: 0, dspm: 0, growth: 0, visit: 0, follow: 0 });
+    ev.forEach(e => {
+      const b = mb[e.d.slice(0, 7)]; if (!b) return;
+      if (e.t === 'GROWTH') { b.growth++; if (e.w) b.w.add(e.c); if (e.h) b.h.add(e.c); }
+      if (e.t === 'DSPM' || e.t === 'DSPM_OTHER') { b.dspm++; if (e.r === 'SUSPECT') b.sus++; }
+      if (e.t === 'DSPM_F') { b.fol++; b.dspm++; }
+      if (e.t === 'VISIT') b.visit++;
+      if (e.t === 'FOLLOW') b.follow++;
+    });
+    const byKey = d.keyAges.map(kk => { const x = eps.filter(e => e.k === kk); return { k: kk, target: x.length, screened: x.filter(e => e.fr).length }; });
+    const dev = { NORMAL: 0, WAIT_FOLLOW: 0, FOLLOW_OVERDUE: 0, REFER: 0, DUE: 0, MISSED: 0 };
+    eps.forEach(e => { if (dev[e.st] !== undefined) dev[e.st]++; });
+    return { k, rows, months, mb, byKey, dev, from, to, capTo };
+  },
+  draw() {
+    const R = this.compute(), k = R.k;
+    document.getElementById('periodNote').innerHTML = `<i class="fa-regular fa-calendar"></i> ช่วงเวลา ${U.fmtDate(R.from)} – ${U.fmtDate(R.to)} · ประชากร (ตัวหารหลัก) = เด็กในทะเบียนที่ยังไม่จำหน่ายและอายุ < 6 ปี ตามตัวกรอง <b>${k.total}</b> คน`;
+    const kpi = (icon, label, val, def, cls = '', unit = '') => `<div class="kpi ${cls}"><div class="ic"><i class="fa-solid ${icon}"></i></div><div class="lbl">${label}</div><div class="val num">${val}${unit ? `<small>${unit}</small>` : ''}</div><div class="def">${def}</div></div>`;
+    document.getElementById('kpis').innerHTML = [
+      kpi('fa-children', 'เด็กในทะเบียนทั้งหมด', k.total, 'ยังไม่จำหน่าย อายุ 0–5 ปี'),
+      kpi('fa-person', 'เด็กชาย', k.boys, U.pct(k.boys, k.total) + '% ของทั้งหมด', 'navy'),
+      kpi('fa-person-dress', 'เด็กหญิง', k.girls, U.pct(k.girls, k.total) + '% ของทั้งหมด', 'navy'),
+      kpi('fa-weight-scale', 'ได้รับการชั่งน้ำหนัก', k.weighed, `${U.pct(k.weighed, k.total)}% ของ ${k.total} คน ในช่วงเวลา`),
+      kpi('fa-ruler-vertical', 'ได้รับการวัดส่วนสูง', k.measured, `${U.pct(k.measured, k.total)}% ของ ${k.total} คน ในช่วงเวลา`),
+      kpi('fa-puzzle-piece', 'ได้รับการประเมินพัฒนาการ', k.screened, `ครอบคลุม ${U.pct(k.screened, k.target)}% ของเป้าหมาย ${k.target} ราย`),
+      kpi('fa-circle-check', 'ผลพัฒนาการสมวัย', k.normal, `${U.pct(k.normal, k.screened)}% ของผู้ได้รับการคัดกรอง ${k.screened} ราย`),
+      kpi('fa-hand-holding-heart', 'ต้องกระตุ้นพัฒนาการ', k.suspect, `สงสัยล่าช้า ${U.pct(k.suspect, k.screened)}% · ติดตามแล้ว ${k.followed}/${k.followBase}`, 'accent'),
+      kpi('fa-hourglass-half', 'ยังไม่ได้รับการประเมิน', k.notAssessed, `ถึง/เลยกำหนดแล้ว (ไม่นับยังไม่ถึงกำหนด ${k.notYetDue} ราย)`, 'accent'),
+      kpi('fa-user-clock', 'เด็กที่ต้องติดตาม', k.needFollow, 'มีแจ้งเตือนระดับส้ม/แดง หรือเคสเปิดอยู่ (ปัจจุบัน)', 'accent'),
+      kpi('fa-calendar-xmark', 'เด็กขาดนัด', k.missedAppt, `${k.missedApptCount} นัดที่เลยกำหนดโดยไม่มีบริการ ในช่วงเวลา`, 'accent'),
+      kpi('fa-house-medical', 'ได้รับการเยี่ยมบ้าน', k.visited, `${U.pct(k.visited, k.total)}% ของ ${k.total} คน ในช่วงเวลา`)
+    ].join('');
+    document.getElementById('defs').innerHTML = `
+      • <b>ความครอบคลุมการชั่งน้ำหนัก/วัดส่วนสูง</b> = เด็กที่มีผลชั่ง/วัด ≥ 1 ครั้งในช่วงเวลา ÷ ประชากรตามตัวกรอง (${k.total})<br>
+      • <b>ความครอบคลุมการประเมินพัฒนาการ</b> = เด็กที่ได้รับการคัดกรองครั้งแรก ÷ เด็กที่ครบอายุเป้าหมาย (${(S.dash.keyAges || []).join(', ')} เดือน) ระหว่าง ${U.fmtDate(R.from)}–${U.fmtDate(R.capTo)} (${k.target} ราย) — ไม่รวมเด็กที่ยังไม่ถึงกำหนด<br>
+      • <b>ร้อยละสมวัย / สงสัยล่าช้า</b> = ผลคัดกรองครั้งแรก ÷ จำนวนที่ได้รับการคัดกรอง (${k.screened})<br>
+      • <b>ร้อยละได้รับการติดตาม</b> = เด็กสงสัยล่าช้าที่ได้รับการประเมินซ้ำ ÷ เด็กสงสัยล่าช้าที่ถึงกำหนดติดตามแล้ว (${k.followBase}) = ${U.pct(k.followed, k.followBase)}%<br>
+      • <b>ขาดนัด</b> = นัดหมายที่เลยวันนัดโดยไม่มีบันทึกบริการ (รวมนัดติดตาม DSPM จากไฟล์ HDC ที่ไม่มีผลติดตาม)<br>
+      • ไม่มีการใช้ตัวเลขตัวอย่าง: ทุกค่าคำนวณจาก Google Sheets ณ เวลาที่ดึงข้อมูล`;
+    this.charts(R);
+  },
+  charts(R) {
+    const c = n => U.css(n);
+    const font = { family: 'Kanit', size: 12 };
+    Chart.defaults.font = font; Chart.defaults.color = c('--text-2');
+    const grid = { color: c('--grid') }, ticks = { color: c('--axis') };
+    const axes = (stacked) => ({ x: { grid: { display: false }, ticks, stacked }, y: { beginAtZero: true, grid, ticks: { ...ticks, precision: 0 }, stacked } });
+    const bar = (color) => ({ backgroundColor: color, borderRadius: 4, borderSkipped: 'start', maxBarThickness: 36, borderColor: c('--chart-surface'), borderWidth: 0 });
+    const mk = (id, cfg) => { if (S.charts[id]) S.charts[id].destroy(); const el = document.getElementById(id); if (!el) return; S.charts[id] = new Chart(el, cfg); };
+    const base = { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { padding: 10, cornerRadius: 8 } } };
+    const legendOn = { ...base, plugins: { ...base.plugins, legend: { display: true, position: 'bottom', labels: { boxWidth: 12, boxHeight: 12, useBorderRadius: true, borderRadius: 3 } } } };
+    const ml = R.months.map(U.monthLabel);
+    const rows = R.rows;
+    const ag = AGE_GROUPS.map((_, i) => rows.filter(r => r.ageGroup === i).length);
+    mk('c1', { type: 'bar', data: { labels: AGE_GROUPS, datasets: [{ label: 'จำนวนเด็ก', data: ag, ...bar(c('--series-1')) }] }, options: { ...base, scales: axes() } });
+    mk('c2', { type: 'doughnut', data: { labels: ['ชาย', 'หญิง'], datasets: [{ data: [R.k.boys, R.k.girls], backgroundColor: [c('--series-1'), c('--series-2')], borderColor: c('--chart-surface'), borderWidth: 2 }] }, options: { ...legendOn, cutout: '62%', interaction: { mode: 'nearest' } } });
+    const vs = [...new Set(S.dash.rows.filter(r => r.active).map(r => r.vhid))].sort();
+    mk('c3', { type: 'bar', data: { labels: vs.map(v => 'หมู่ ' + Number(v)), datasets: [{ label: 'จำนวนเด็ก', data: vs.map(v => rows.filter(r => r.vhid === v).length), ...bar(c('--series-3')) }] }, options: { ...base, indexAxis: 'y', scales: { x: { beginAtZero: true, grid, ticks: { ...ticks, precision: 0 } }, y: { grid: { display: false }, ticks } } } });
+    const dk = [['NORMAL', 'สมวัย', '--st-good'], ['WAIT_FOLLOW', 'รอติดตามผล', '--st-warn'], ['FOLLOW_OVERDUE', 'เกินกำหนดติดตาม', '--st-serious'], ['REFER', 'ล่าช้า/ส่งต่อ', '--st-critical'], ['DUE', 'ถึงกำหนด ยังไม่ประเมิน', '--series-1'], ['MISSED', 'ขาดการประเมิน', '--axis']];
+    mk('c4', { type: 'bar', data: { labels: dk.map(x => x[1]), datasets: [{ label: 'จำนวน (ราย)', data: dk.map(x => R.dev[x[0]]), backgroundColor: dk.map(x => c(x[2])), borderRadius: 4, maxBarThickness: 40 }] }, options: { ...base, scales: axes() } });
+    mk('c5', { type: 'line', data: { labels: ml, datasets: [
+      { label: 'ชั่งน้ำหนัก (คน)', data: R.months.map(m => R.mb[m].w.size), borderColor: c('--series-1'), backgroundColor: c('--series-1'), borderWidth: 2, pointRadius: 4, tension: .25 },
+      { label: 'วัดส่วนสูง (คน)', data: R.months.map(m => R.mb[m].h.size), borderColor: c('--series-2'), backgroundColor: c('--series-2'), borderWidth: 2, pointRadius: 4, tension: .25 }] }, options: { ...legendOn, scales: axes() } });
+    mk('c6', { type: 'bar', data: { labels: ml, datasets: [
+      { label: 'พบสงสัยล่าช้าใหม่', data: R.months.map(m => R.mb[m].sus), ...bar(c('--series-2')) },
+      { label: 'ประเมินซ้ำหลังกระตุ้น', data: R.months.map(m => R.mb[m].fol), ...bar(c('--series-3')) }] }, options: { ...legendOn, scales: axes() } });
+    mk('c7', { type: 'bar', data: { labels: R.byKey.map(x => x.k + ' เดือน'), datasets: [{ label: 'ร้อยละคัดกรอง', data: R.byKey.map(x => U.pct(x.screened, x.target)), ...bar(c('--series-1')) }] },
+      options: { ...base, scales: { x: { grid: { display: false }, ticks }, y: { beginAtZero: true, max: 100, grid, ticks: { ...ticks, callback: v => v + '%' } } },
+        plugins: { ...base.plugins, tooltip: { callbacks: { label: (ctx) => { const x = R.byKey[ctx.dataIndex]; return ` ${ctx.parsed.y}% (คัดกรอง ${x.screened} / เป้าหมาย ${x.target})`; } } } } } });
+    mk('c8', { type: 'bar', data: { labels: ml, datasets: [
+      { label: 'ประเมินพัฒนาการ', data: R.months.map(m => R.mb[m].dspm), ...bar(c('--series-1')), borderWidth: { top: 2 }, borderSkipped: false },
+      { label: 'ชั่ง/วัด', data: R.months.map(m => R.mb[m].growth), ...bar(c('--series-2')), borderWidth: { top: 2 }, borderSkipped: false },
+      { label: 'เยี่ยมบ้าน', data: R.months.map(m => R.mb[m].visit), ...bar(c('--series-3')), borderWidth: { top: 2 }, borderSkipped: false },
+      { label: 'บันทึกติดตาม', data: R.months.map(m => R.mb[m].follow), ...bar(c('--series-4')), borderWidth: { top: 2 }, borderSkipped: false }] }, options: { ...legendOn, scales: axes(true) } });
+  }
+};
+
+/* ---------------- ALERTS ---------------- */
+Pages.alerts = {
+  async render(view) {
+    view.innerHTML = `<div class="toolbar"><select class="input" id="alLevel" style="max-width:180px"><option value="">ทุกระดับ</option><option value="red">แดง: เกินกำหนด/เสี่ยงสูง</option><option value="orange">ส้ม: ต้องติดตาม</option><option value="yellow">เหลือง: ใกล้ถึงกำหนด</option></select>
+      <select class="input" id="alType" style="max-width:240px"><option value="">ทุกประเภท</option>${Object.entries(ALERT_TYPE).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+      <select class="input" id="alV" style="max-width:200px">${villageOptions().map(([v, t]) => `<option value="${v}">${U.esc(t)}</option>`).join('')}</select>
+      <div class="grow"></div><span class="small muted"><span class="dot green"></span> ปกติ <span class="dot yellow"></span> ใกล้ถึงกำหนด <span class="dot orange"></span> ต้องติดตาม <span class="dot red"></span> เกินกำหนด/เสี่ยงสูง</span></div>
+      <div class="notice"><i class="fa-solid fa-circle-info"></i><div>การแจ้งเตือนคำนวณจากข้อมูลและเกณฑ์ที่กำหนดในระบบ เพื่อช่วยจัดลำดับการติดตามเท่านั้น <b>ไม่ใช่การวินิจฉัยโรค</b></div></div>
+      <div id="alList">${UI.skeleton(4)}</div>`;
+    const load = async () => {
+      const el = document.getElementById('alList');
+      const r = await API.call('getAlerts', { level: document.getElementById('alLevel').value, type: document.getElementById('alType').value, vhid: document.getElementById('alV').value });
+      if (!r.alerts.length) { el.innerHTML = '<div class="card">' + UI.empty('ไม่มีรายการแจ้งเตือน', 'fa-bell-slash') + '</div>'; return; }
+      el.innerHTML = r.alerts.map((a, i) => `<div class="alert-item ${a.level}"><span class="dot ${a.level}" style="margin-top:7px"></span><div class="body"><b>${U.esc(a.name)}</b> <span class="small muted">· หมู่ ${Number(a.vhid)} · ${U.esc(a.ageText)}</span><div class="small">${U.esc(a.text)}</div><div style="margin-top:4px">${UI.levelBadge(a.level)} ${UI.badge(ALERT_TYPE[a.type] || a.type, 'gray')}</div></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><a class="btn btn-ghost btn-sm" href="#/child/${encodeURIComponent(a.pid)}"><i class="fa-regular fa-id-card"></i><span class="hide-m">ประวัติ</span></a>${ALERT_TO_FOLLOW[a.type] ? `<button class="btn btn-primary btn-sm" data-i="${i}"><i class="fa-solid fa-user-clock"></i><span class="hide-m">เปิดเคส</span></button>` : ''}</div></div>`).join('');
+      el.querySelectorAll('button[data-i]').forEach(b => b.addEventListener('click', () => { const a = r.alerts[+b.dataset.i]; openFollowupForm({ pid: a.pid, name: a.name, problem_type: ALERT_TO_FOLLOW[a.type], note: a.text }, load); }));
+    };
+    ['alLevel', 'alType', 'alV'].forEach(id => document.getElementById(id).addEventListener('change', () => load().catch(UI.error)));
+    await load();
+  }
+};
+
+/* ---------------- CHILDREN ---------------- */
+Pages.children = {
+  q: '', vhid: '', dev: '', sex: '', inactive: false,
+  async render(view) {
+    const kids = await loadChildren();
+    view.innerHTML = `<div class="toolbar">
+      <div class="search grow"><i class="fa-solid fa-magnifying-glass"></i><input class="input" id="chQ" placeholder="ค้นหาชื่อ นามสกุล PID หรือ CID" value="${U.esc(this.q)}"></div>
+      <select class="input" id="chV" style="max-width:190px">${villageOptions().map(([v, t]) => `<option value="${v}" ${v === this.vhid ? 'selected' : ''}>${U.esc(t)}</option>`).join('')}</select>
+      <select class="input" id="chD" style="max-width:200px"><option value="">ทุกสถานะพัฒนาการ</option>${Object.entries(DEV_TEXT).map(([k, t]) => `<option value="${k}" ${k === this.dev ? 'selected' : ''}>${t}</option>`).join('')}</select>
+      <select class="input" id="chS" style="max-width:120px"><option value="">ทุกเพศ</option><option value="1" ${this.sex === '1' ? 'selected' : ''}>ชาย</option><option value="2" ${this.sex === '2' ? 'selected' : ''}>หญิง</option></select>
+      <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="chI" ${this.inactive ? 'checked' : ''}> รวมที่จำหน่าย/เกิน 5 ปี</label>
+      ${can('ADMIN', 'STAFF') ? '<button class="btn btn-primary" id="chAdd"><i class="fa-solid fa-user-plus"></i> ลงทะเบียนเด็ก</button>' : ''}
+      <button class="btn btn-ghost" id="chX"><i class="fa-solid fa-file-excel"></i><span class="hide-m">ส่งออก Excel</span></button></div>
+      <div class="card" style="padding:14px"><div class="small muted" id="chCount" style="margin-bottom:10px"></div><div id="chList"></div></div>`;
+    const cols = [
+      { key: 'pid', label: 'PID' }, { key: 'name', label: 'ชื่อ-สกุล', render: c => `<b style="font-weight:500">${U.esc(c.name)} ${U.esc(c.lname)}</b><div class="small muted">${U.esc(c.cid)}</div>` },
+      { key: 'sex', label: 'เพศ', render: c => U.sexText(c.sex) }, { key: 'ageText', label: 'อายุ', cls: 'nowrap' },
+      { key: 'vhid', label: 'หมู่', render: c => 'หมู่ ' + Number(c.vhid) + ' / ' + U.esc(c.addr) },
+      { key: 'dev', label: 'พัฒนาการ', render: c => UI.devBadge(c.devStatus) },
+      { key: 'growth', label: 'ชั่ง/วัดล่าสุด', render: c => c.growth ? `${U.fmtDate(c.growth.date)}<div class="small muted">${U.esc(c.growth.weight || '-')} กก. / ${U.esc(c.growth.height || '-')} ซม.</div>` : '<span class="muted">-</span>' },
+      { key: 'alert', label: 'แจ้งเตือน', render: c => c.alertCount ? UI.levelBadge(c.alertLevel) + ` <span class="small muted">${c.alertCount}</span>` : UI.levelBadge('green') },
+      { key: 'st', label: 'สถานะ', render: c => c.active ? '' : UI.badge('จำหน่าย/เกินเกณฑ์อายุ', 'gray') }
+    ];
+    const draw = () => {
+      const s = this.q.toLowerCase();
+      const list = kids.filter(c => (this.inactive || c.active) && (!this.vhid || c.vhid === this.vhid) && (!this.dev || c.devStatus === this.dev) && (!this.sex || c.sex === this.sex)
+        && (!s || (c.name + ' ' + c.lname + ' ' + c.pid + ' ' + c.cid).toLowerCase().includes(s)));
+      this.list = list;
+      document.getElementById('chCount').textContent = `พบ ${list.length} คน จากทั้งหมด ${kids.length} คน`;
+      const el = document.getElementById('chList');
+      el.innerHTML = UI.table(cols, list.slice(0, 500), { onRow: true, wrapCls: 'desk-table', empty: 'ไม่พบเด็กตามเงื่อนไข' }) +
+        `<div class="mobile-cards">${list.slice(0, 200).map((c, i) => `<div class="child-card" data-i="${i}"><span class="dot ${c.alertLevel}"></span><div class="body"><b>${U.esc(c.name)} ${U.esc(c.lname)}</b><div class="small muted">PID ${U.esc(c.pid)} · ${U.esc(c.ageText)} · หมู่ ${Number(c.vhid)}</div><div style="margin-top:4px">${UI.devBadge(c.devStatus)}</div></div><i class="fa-solid fa-chevron-right muted"></i></div>`).join('') || UI.empty()}</div>` +
+        (list.length > 500 ? '<div class="small muted" style="margin-top:8px">แสดง 500 รายการแรก — กรุณาค้นหาเพิ่มเติม</div>' : '');
+      UI.bindRows(el, list, c => Router.go('#/child/' + encodeURIComponent(c.pid)));
+      el.querySelectorAll('.child-card').forEach(x => x.addEventListener('click', () => Router.go('#/child/' + encodeURIComponent(list[+x.dataset.i].pid))));
+    };
+    document.getElementById('chQ').addEventListener('input', U.debounce(e => { this.q = e.target.value.trim(); draw(); }, 200));
+    document.getElementById('chV').addEventListener('change', e => { this.vhid = e.target.value; draw(); });
+    document.getElementById('chD').addEventListener('change', e => { this.dev = e.target.value; draw(); });
+    document.getElementById('chS').addEventListener('change', e => { this.sex = e.target.value; draw(); });
+    document.getElementById('chI').addEventListener('change', e => { this.inactive = e.target.checked; draw(); });
+    document.getElementById('chAdd')?.addEventListener('click', () => openChildForm());
+    document.getElementById('chX').addEventListener('click', () => {
+      exportXlsx(`ทะเบียนเด็ก_${U.todayISO()}.xlsx`, [{ key: 'pid', label: 'PID' }, { key: 'cid', label: 'CID (ปกปิด)' }, { key: 'name', label: 'ชื่อ' }, { key: 'lname', label: 'นามสกุล' }, { key: 'sexT', label: 'เพศ' }, { key: 'birth', label: 'วันเกิด' }, { key: 'ageText', label: 'อายุ' }, { key: 'vhid', label: 'หมู่' }, { key: 'addr', label: 'บ้านเลขที่' }, { key: 'devT', label: 'สถานะพัฒนาการ' }, { key: 'statusText', label: 'สถานะ' }],
+        this.list.map(c => ({ ...c, sexT: U.sexText(c.sex), devT: DEV_TEXT[c.devStatus] || '' })), 'ทะเบียนเด็ก');
+    });
+    draw();
+  }
+};
+
+function openChildForm(child) {
+  const isNew = !child; const c = child || {};
+  const vopts = villageOptions(false);
+  UI.modal({
+    title: isNew ? 'ลงทะเบียนเด็กใหม่' : 'แก้ไขข้อมูลเด็ก',
+    body: `${!isNew && c.record_source === 'IMPORT' ? '<div class="notice warn"><i class="fa-solid fa-circle-info"></i><div>เด็กคนนี้มาจากไฟล์นำเข้า ข้อมูลประจำตัว (ชื่อ เพศ วันเกิด ที่อยู่ หมู่ สถานะ) อาจถูกปรับปรุงเมื่อนำเข้า Excel รอบใหม่ในโหมด UPDATE/UPSERT ส่วนข้อมูลผู้ปกครองและหมายเหตุจะไม่ถูกแตะ</div></div>' : ''}
+    <div class="form-grid">
+      ${UI.field('pid', 'PID (รหัสบุคคลจาก HOSxP/JHCIS)', { required: true, value: c.pid, attrs: isNew ? 'maxlength="20"' : 'readonly' })}
+      ${UI.field('cid', 'เลขบัตรประชาชน (CID)', { value: c.cid, attrs: 'inputmode="numeric" maxlength="13"', hint: '13 หลัก (ถ้ามี) ระบบตรวจซ้ำกับทะเบียน' })}
+      ${UI.field('name', 'ชื่อ', { required: true, value: c.name })}
+      ${UI.field('lname', 'นามสกุล', { required: true, value: c.lname })}
+      ${UI.field('sex', 'เพศ', { type: 'select', required: true, value: c.sex, options: [['', '-- เลือก --'], ['1', 'ชาย'], ['2', 'หญิง']] })}
+      ${UI.field('birth', 'วันเดือนปีเกิด', { type: 'date', required: true, value: c.birth, attrs: `max="${U.todayISO()}" data-nofuture` })}
+      <div class="full small" id="ageCalc" style="color:var(--brand-700)"></div>
+      ${UI.field('addr', 'บ้านเลขที่/ที่อยู่', { value: c.addr })}
+      ${UI.field('vhid', 'หมู่บ้าน', { type: 'select', value: c.vhid, options: [['', '-- เลือก --']].concat(vopts) })}
+      ${UI.field('guardian_name', 'ชื่อผู้ปกครอง', { value: c.guardian_name })}
+      ${UI.field('guardian_phone', 'เบอร์โทรศัพท์ผู้ปกครอง', { type: 'tel', value: c.guardian_phone, attrs: 'inputmode="tel" maxlength="12"' })}
+      ${UI.field('caregiver', 'ผู้ดูแลหลัก', { value: c.caregiver, placeholder: 'เช่น แม่ ยาย ศูนย์เด็กเล็ก' })}
+      ${UI.field('register_date', 'วันที่ขึ้นทะเบียน', { type: 'date', value: c.register_date || U.todayISO(), attrs: 'data-nofuture' })}
+      ${UI.field('discharge', 'สถานะการมีชีวิต/จำหน่าย', { type: 'select', value: c.discharge || '9', options: [['9', 'มีชีวิต/ไม่จำหน่าย'], ['1', 'เสียชีวิต'], ['2', 'ย้ายออก'], ['3', 'สาบสูญ']] })}
+      ${UI.field('check_typearea', 'สถานะการอยู่ในพื้นที่ (Typearea)', { type: 'select', value: c.check_typearea || '1', options: [['1', '1 อยู่จริงตามทะเบียนบ้าน'], ['2', '2 มีชื่อแต่ตัวไม่อยู่'], ['3', '3 อยู่จริง ทะเบียนบ้านนอกเขต'], ['4', '4 นอกเขตรับบริการ'], ['5', '5 อยู่ในเขต ไม่มีทะเบียนบ้าน']] })}
+      ${UI.field('note', 'หมายเหตุ', { type: 'textarea', full: true, value: c.note })}
+    </div>`,
+    onOpen: form => {
+      const upd = () => { const b = form.birth.value; const a = U.age(b, U.todayISO()); document.getElementById('ageCalc').textContent = a && a.days >= 0 ? `อายุปัจจุบัน: ${a.text} (${a.totalMonths} เดือน)` : ''; };
+      form.birth.addEventListener('change', upd); upd();
+    },
+    onSubmit: async d => {
+      if (d.cid && !/^\d{13}$/.test(d.cid)) throw new ApiError('VALIDATION', 'CID ต้องเป็นตัวเลข 13 หลัก');
+      if (d.cid && !Validate.cid(d.cid) && !(await UI.confirm('CID อาจไม่ถูกต้อง', 'เลขบัตรประชาชนไม่ผ่านการตรวจหลักสุดท้าย ต้องการบันทึกต่อหรือไม่?', 'บันทึกต่อ', 'warning'))) return false;
+      const r = await API.call(isNew ? 'saveChild' : 'updateChild', d, { write: true });
+      S.children = null; S.dash = null;
+      UI.toast(isNew ? 'ลงทะเบียนเด็กเรียบร้อย' : (r.changed ? 'บันทึกการแก้ไขเรียบร้อย' : 'ไม่มีข้อมูลที่เปลี่ยนแปลง'));
+      Router.go('#/child/' + encodeURIComponent(r.pid));
+    }
+  });
+}
+
+/* ---------------- CHILD PROFILE ---------------- */
+Pages.child = {
+  title: 'ประวัติสุขภาพรายบุคคล',
+  tab: 'info',
+  async render(view, pid) {
+    const D = await API.call('getChildDetail', { pid });
+    this.D = D;
+    const c = D.child, s = D.summary || {};
+    const age = U.age(c.birth, U.todayISO());
+    view.innerHTML = `<div class="card"><div class="profile-head">
+        <div class="av ${c.sex === '2' ? 'girl' : ''}"><i class="fa-solid ${c.sex === '2' ? 'fa-person-dress' : 'fa-person'}"></i></div>
+        <div style="flex:1;min-width:220px"><h2>${U.esc(c.name)} ${U.esc(c.lname)}</h2>
+          <div class="muted small">PID ${U.esc(c.pid)} · CID ${U.esc(can('ADMIN', 'STAFF') ? c.cid : U.maskCid(c.cid)) || '-'} · ${U.sexText(c.sex)} · เกิด ${U.fmtDate(c.birth)}</div>
+          <div class="chips">${UI.badge(age ? age.text : '-', 'brand', 'fa-cake-candles')} ${UI.badge('หมู่ ' + Number(c.vhid) + ' ' + (U.vName(c.vhid).startsWith('หมู่') ? '' : U.vName(c.vhid)), 'gray', 'fa-location-dot')} ${UI.devBadge(s.devStatus)} ${s.active === false ? UI.badge(s.statusText, 'gray') : ''}</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">${can('ADMIN', 'STAFF') ? '<button class="btn btn-ghost btn-sm" id="pEdit"><i class="fa-solid fa-pen"></i> แก้ไข</button>' : ''}<button class="btn btn-ghost btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> พิมพ์</button></div>
+      </div>
+      ${(s.alerts || []).length ? `<div style="margin-top:14px">${s.alerts.map(a => `<div class="alert-item ${a.level}" style="padding:8px 12px;margin-bottom:6px"><span class="dot ${a.level}" style="margin-top:7px"></span><div class="body small">${U.esc(a.text)}</div></div>`).join('')}</div>` : ''}
+      </div>
+      <div class="card"><div class="tabs" id="pTabs">${[['info', 'ข้อมูลทั่วไป'], ['growth', 'การเจริญเติบโต'], ['dev', 'พัฒนาการ'], ['follow', 'การติดตาม'], ['visit', 'เยี่ยมบ้าน'], ['vacc', 'วัคซีน/บริการ'], ['appt', 'นัดหมาย']]
+        .filter(t => t[0] !== 'vacc' || can('ADMIN', 'STAFF')).map(t => `<button data-t="${t[0]}" class="${this.tab === t[0] ? 'active' : ''}">${t[1]}</button>`).join('')}</div><div id="pBody"></div></div>`;
+    document.getElementById('pEdit')?.addEventListener('click', () => openChildForm(c));
+    view.querySelectorAll('#pTabs button').forEach(b => b.addEventListener('click', () => { this.tab = b.dataset.t; view.querySelectorAll('#pTabs button').forEach(x => x.classList.toggle('active', x === b)); this.drawTab(); }));
+    this.drawTab();
+  },
+  reload() { S.children = null; S.dash = null; Router.render(); },
+  drawTab() {
+    const D = this.D, c = D.child, el = document.getElementById('pBody');
+    const staff = can('ADMIN', 'STAFF');
+    const voidBtn = (type, id, isVoid) => staff && !isVoid ? `<button class="btn btn-ghost btn-sm" data-void="${type}|${U.esc(id)}" title="ยกเลิกรายการ (ไม่ลบประวัติ)"><i class="fa-solid fa-ban"></i></button>` : '';
+    const bindVoid = () => el.querySelectorAll('[data-void]').forEach(b => b.addEventListener('click', async () => {
+      const [type, id] = b.dataset.void.split('|');
+      const r = await Swal.fire({ title: 'ยกเลิกรายการ', text: 'รายการจะยังคงอยู่ในประวัติแต่ถูกทำเครื่องหมายว่ายกเลิก กรุณาระบุเหตุผล', input: 'text', inputPlaceholder: 'เหตุผล เช่น กรอกผิด', showCancelButton: true, confirmButtonText: 'ยกเลิกรายการ', cancelButtonText: 'ปิด', confirmButtonColor: '#d03b3b', inputValidator: v => (!v || v.trim().length < 3) && 'กรุณาระบุเหตุผลอย่างน้อย 3 ตัวอักษร' });
+      if (!r.isConfirmed) return;
+      try { UI.loading(true, 'กำลังบันทึก...'); await API.call('voidRecord', { type, id, reason: r.value.trim() }, { write: true }); UI.toast('ยกเลิกรายการแล้ว'); this.reload(); } catch (e) { UI.error(e); } finally { UI.loading(false); }
+    }));
+    const isV = r => r.is_void === 'TRUE';
+    switch (this.tab) {
+      case 'info': {
+        const s = D.summary || {};
+        el.innerHTML = `<div class="grid g-2"><dl class="kv">
+          <dt>ชื่อ-สกุล</dt><dd>${U.esc(c.name)} ${U.esc(c.lname)}</dd><dt>อายุปัจจุบัน</dt><dd>${U.esc(U.age(c.birth, U.todayISO())?.text || '-')} (${s.ageMonths ?? '-'} เดือน)</dd>
+          <dt>ที่อยู่</dt><dd>บ้านเลขที่ ${U.esc(c.addr || '-')} หมู่ ${Number(c.vhid) || '-'} (${U.esc(c.check_vhid || '')})</dd><dt>สถานะ</dt><dd>${U.esc(s.statusText || '')}</dd>
+          <dt>สัญชาติ</dt><dd>${U.esc(c.nation || '-')}</dd><dt>หน่วยบริการ</dt><dd>${U.esc(c.hosname || '')} (${U.esc(c.hoscode || '')})</dd></dl>
+          <dl class="kv"><dt>ผู้ปกครอง</dt><dd>${U.esc(c.guardian_name || '-')}</dd><dt>เบอร์โทรศัพท์</dt><dd>${c.guardian_phone ? `<a href="tel:${U.esc(c.guardian_phone)}">${U.esc(c.guardian_phone)}</a>` : '-'}</dd>
+          <dt>ผู้ดูแลหลัก</dt><dd>${U.esc(c.caregiver || '-')}</dd><dt>วันที่ขึ้นทะเบียน</dt><dd>${U.fmtDate(c.register_date)}</dd>
+          <dt>แหล่งข้อมูล</dt><dd>${c.record_source === 'IMPORT' ? 'นำเข้าจาก Excel (ปรับปรุงล่าสุด ' + U.fmtDateTime(c.src_updated_at) + ')' : 'ลงทะเบียนในระบบ'}</dd><dt>หมายเหตุ</dt><dd>${U.esc(c.note || '-')}</dd></dl></div>
+          <h4 style="margin:18px 0 10px">ข้อมูลคัดกรองต้นฉบับจากไฟล์ HDC (ไม่แก้ไข)</h4>
+          ${UI.table([{ key: 'agemonth', label: 'อายุเป้าหมาย' }, { key: 'w', label: 'ช่วงคัดกรอง', render: r => U.fmtDate(r.date_start) + ' – ' + U.fmtDate(r.date_end) }, { key: 'date_serv_first', label: 'วันคัดกรอง', render: r => U.fmtDate(r.date_serv_first) },
+            { key: 'sp_first', label: 'รหัส sp' }, { key: 'result1', label: 'ผลครั้งแรก' }, { key: 'date_serv2', label: 'กำหนดติดตาม', render: r => U.fmtDate(r.date_serv2) }, { key: 'date_serv_last', label: 'วันติดตาม', render: r => U.fmtDate(r.date_serv_last) }, { key: 'result2', label: 'ผลติดตาม' }], D.source, { empty: 'ไม่มีข้อมูลจากไฟล์นำเข้า' })}`;
+        break;
+      }
+      case 'growth': {
+        el.innerHTML = `<div class="toolbar">${staff ? '<button class="btn btn-primary" id="gAdd"><i class="fa-solid fa-plus"></i> บันทึกน้ำหนัก/ส่วนสูง</button>' : ''}<div class="grow"></div></div>
+          <div class="grid g-2" style="margin-bottom:16px"><div><div class="chart-box"><canvas id="gcW"></canvas></div></div><div><div class="chart-box"><canvas id="gcH"></canvas></div></div></div><div id="gNote" class="legend-note"></div>
+          ${UI.table([{ key: 'measure_date', label: 'วันที่', render: r => U.fmtDate(r.measure_date) }, { key: 'age_text', label: 'อายุ', cls: 'nowrap' }, { key: 'weight_kg', label: 'น้ำหนัก (กก.)', cls: 'num' }, { key: 'height_cm', label: 'ส่วนสูง (ซม.)', cls: 'num', render: r => U.esc(r.height_cm) + (r.position ? ` <span class="small muted">${r.position === 'LENGTH' ? 'นอน' : 'ยืน'}</span>` : '') },
+            { key: 'bmi', label: 'BMI', cls: 'num' }, { key: 'z', label: 'Z-score (WAZ/HAZ/WHZ)', cls: 'num nowrap', render: r => [r.waz, r.haz, r.whz].map(x => x === '' ? '–' : x).join(' / ') },
+            { key: 's', label: 'การแปลผล', render: r => r.ref_status !== 'ประเมินแล้ว' && !r.wfa_status ? UI.badge('รอประเมิน', 'gray', 'fa-hourglass') : [['น/อ', r.wfa_status], ['ส/อ', r.hfa_status], ['น/ส', r.wfh_status]].filter(x => x[1]).map(x => `<div class="small">${x[0]}: ${U.esc(x[1])}</div>`).join('') },
+            { key: 'flags', label: 'ข้อสังเกต', render: r => r.flags ? `<span class="small" style="color:var(--st-serious-ink)">${U.esc(r.flags)}</span>` : '' },
+            { key: 'measurer', label: 'ผู้วัด' }, { key: 'x', label: '', render: r => isV(r) ? `<span class="small">ยกเลิก: ${U.esc(r.void_reason)}</span>` : voidBtn('GROWTH', r.record_id) }], D.growth.slice().reverse(), { rowClass: r => isV(r) ? 'void' : '', empty: 'ยังไม่มีข้อมูลน้ำหนัก/ส่วนสูง (ไฟล์ต้นฉบับไม่มีข้อมูลนี้)' })}`;
+        document.getElementById('gAdd')?.addEventListener('click', () => openGrowthForm(c, () => this.reload()));
+        bindVoid();
+        API.call('getGrowthHistory', { pid: c.pid }).then(g => drawGrowthCharts(c, g)).catch(() => {});
+        break;
+      }
+      case 'dev': {
+        const s = D.summary || {};
+        el.innerHTML = `<div class="toolbar">${staff ? '<button class="btn btn-primary" id="dAdd"><i class="fa-solid fa-plus"></i> บันทึกการประเมินพัฒนาการ</button>' : ''}</div>
+          <h4 style="margin:0 0 10px">ช่วงอายุเป้าหมายการคัดกรอง DSPM</h4>
+          ${UI.table([{ key: 'key', label: 'อายุ (เดือน)' }, { key: 'w', label: 'ช่วงคัดกรอง', render: e => U.fmtDate(e.start) + ' – ' + U.fmtDate(e.end) }, { key: 'f', label: 'คัดกรองครั้งแรก', render: e => e.first ? `${U.fmtDate(e.first.date)} · ${RES_TEXT[e.first.result] || '-'} <span class="small muted">(${e.first.origin})</span>` : '-' },
+            { key: 'due', label: 'กำหนดติดตาม', render: e => U.fmtDate(e.followDue) }, { key: 'u', label: 'ผลติดตาม', render: e => e.follow ? `${U.fmtDate(e.follow.date)} · ${RES_TEXT[e.follow.result] || '-'}` : '-' }, { key: 'st', label: 'สถานะ', render: e => UI.devBadge(e.status) }], s.episodes || [], { empty: 'ไม่มีข้อมูลวันเกิด' })}
+          <h4 style="margin:18px 0 10px">ประวัติการประเมินที่บันทึกในระบบ</h4>
+          ${UI.table([{ key: 'assess_date', label: 'วันที่', render: r => U.fmtDate(r.assess_date) }, { key: 'age_text', label: 'อายุ', cls: 'nowrap' }, { key: 'assess_type', label: 'ประเภท', render: r => r.assess_type === 'FIRST' ? 'คัดกรอง' : 'ติดตามหลังกระตุ้น' + (r.age_key ? ' (' + r.age_key + ' ด.)' : '') },
+            ...DOMAINS.map(([k]) => ({ key: k, label: k.toUpperCase(), render: r => r[k] === 'PASS' ? '<span style="color:var(--st-good-ink)">✔</span>' : r[k] === 'FAIL' ? '<span style="color:var(--st-critical-ink)">✘</span>' : '–' })),
+            { key: 'overall', label: 'สรุป', render: r => UI.badge(RES_TEXT[r.overall], r.overall === 'NORMAL' ? 'green' : r.overall === 'SUSPECT' ? 'orange' : 'gray') }, { key: 'advice', label: 'คำแนะนำ' }, { key: 'assessor', label: 'ผู้ประเมิน' },
+            { key: 'x', label: '', render: r => isV(r) ? `<span class="small">ยกเลิก: ${U.esc(r.void_reason)}</span>` : voidBtn('DEV', r.record_id) }], D.development, { rowClass: r => isV(r) ? 'void' : '', empty: 'ยังไม่มีการประเมินที่บันทึกในระบบ' })}`;
+        document.getElementById('dAdd')?.addEventListener('click', () => Router.go('#/development/' + encodeURIComponent(c.pid)));
+        bindVoid();
+        break;
+      }
+      case 'follow':
+        el.innerHTML = `<div class="toolbar"><button class="btn btn-primary" id="fAdd"><i class="fa-solid fa-plus"></i> เปิดเคสติดตาม</button></div>` + followupTable(D.followups, () => this.reload());
+        document.getElementById('fAdd').addEventListener('click', () => openFollowupForm({ pid: c.pid, name: c.name + ' ' + c.lname }, () => this.reload()));
+        bindFollowupTable(el, D.followups, () => this.reload());
+        break;
+      case 'visit':
+        el.innerHTML = `<div class="toolbar"><button class="btn btn-primary" id="vAdd"><i class="fa-solid fa-plus"></i> บันทึกการเยี่ยมบ้าน</button></div>` + visitTable(D.visits, staff);
+        document.getElementById('vAdd').addEventListener('click', () => Router.go('#/visits/' + encodeURIComponent(c.pid)));
+        bindVoid();
+        break;
+      case 'vacc':
+        el.innerHTML = `<div class="toolbar"><button class="btn btn-primary" id="vcAdd"><i class="fa-solid fa-plus"></i> บันทึกวัคซีน/บริการ</button></div>` + vaccTable(D.vaccinations, staff);
+        document.getElementById('vcAdd').addEventListener('click', () => openVaccForm(c, () => this.reload()));
+        bindVoid();
+        break;
+      case 'appt':
+        el.innerHTML = `<div class="toolbar">${staff ? '<button class="btn btn-primary" id="aAdd"><i class="fa-solid fa-plus"></i> เพิ่มนัดหมาย</button>' : ''}</div>` + apptTable(D.appointments);
+        document.getElementById('aAdd')?.addEventListener('click', () => openApptForm(c, () => this.reload()));
+        bindApptTable(el, D.appointments, () => this.reload());
+        break;
+    }
+  }
+};
+
+/* ---------- Growth form & chart ---------- */
+function openGrowthForm(child, done) {
+  UI.modal({
+    title: 'บันทึกน้ำหนัก/ส่วนสูง — ' + child.name + ' ' + child.lname,
+    body: `<div class="notice"><i class="fa-solid fa-ruler-combined"></i><div>ตามมาตรฐาน WHO: เด็กอายุ <b>ต่ำกว่า 2 ปี</b> วัด<b>ความยาวท่านอน</b> · อายุ <b>2 ปีขึ้นไป</b> วัด<b>ส่วนสูงท่ายืน</b> (หากวัดต่างจากนี้ ระบบปรับค่า 0.7 ซม. ก่อนคำนวณ)</div></div>
+      <div class="form-grid">
+      ${UI.field('measure_date', 'วันที่ตรวจ', { type: 'date', required: true, value: U.todayISO(), attrs: `max="${U.todayISO()}" min="${child.birth}" data-nofuture data-min="${child.birth}"` })}
+      <div><label class="f">อายุ ณ วันที่ตรวจ</label><div class="input" id="gAge" style="background:var(--surface-2)">-</div></div>
+      ${UI.field('weight_kg', 'น้ำหนัก (กิโลกรัม)', { type: 'number', attrs: 'step="0.01" min="0.5" max="45" inputmode="decimal"' })}
+      ${UI.field('height_cm', 'ส่วนสูง/ความยาว (เซนติเมตร)', { type: 'number', attrs: 'step="0.1" min="35" max="135" inputmode="decimal"' })}
+      ${UI.field('position', 'วิธีการวัดส่วนสูง', { type: 'select', options: [['', '-- เลือก (ถ้ามีส่วนสูง) --'], ['LENGTH', 'ความยาวท่านอน (Length)'], ['HEIGHT', 'ส่วนสูงท่ายืน (Height)']] })}
+      ${UI.field('measurer', 'ผู้ตรวจวัด', { required: true, value: S.user.full_name })}
+      ${UI.field('method_note', 'อุปกรณ์/วิธีการชั่งวัด', { placeholder: 'เช่น เครื่องชั่งดิจิทัล, ไม้วัดความยาว' })}
+      ${UI.field('note', 'หมายเหตุ', {})}</div><div id="gWarn"></div>`,
+    onOpen: form => {
+      const upd = () => {
+        const a = U.age(child.birth, form.measure_date.value);
+        document.getElementById('gAge').textContent = a && a.days >= 0 ? a.text : 'วันที่ไม่ถูกต้อง';
+        if (a && !form.position.dataset.touched) form.position.value = form.height_cm.value ? (a.days < 731 ? 'LENGTH' : 'HEIGHT') : '';
+      };
+      form.position.addEventListener('change', () => form.position.dataset.touched = '1');
+      form.measure_date.addEventListener('change', upd); form.height_cm.addEventListener('input', upd); upd();
+    },
+    onSubmit: async d => {
+      if (!d.weight_kg && !d.height_cm) throw new ApiError('VALIDATION', 'กรุณากรอกน้ำหนักหรือส่วนสูงอย่างน้อย 1 ค่า');
+      if (d.height_cm && !d.position) throw new ApiError('VALIDATION', 'กรุณาเลือกวิธีการวัดส่วนสูง');
+      const r = await API.call('saveGrowthRecord', { pid: child.pid, ...d }, { write: true });
+      const rec = r.record;
+      await Swal.fire({ icon: rec.flags ? 'warning' : 'success', title: 'บันทึกเรียบร้อย', confirmButtonColor: '#059669',
+        html: `<div style="text-align:left">อายุ ${U.esc(rec.age_text)}<br>${rec.ref_status === 'ประเมินแล้ว' ? `น้ำหนักตามเกณฑ์อายุ: <b>${U.esc(rec.wfa_status || '-')}</b><br>ส่วนสูงตามเกณฑ์อายุ: <b>${U.esc(rec.hfa_status || '-')}</b><br>น้ำหนักตามเกณฑ์ส่วนสูง: <b>${U.esc(rec.wfh_status || '-')}</b>` : `<span class="muted">${U.esc(rec.ref_status)}</span>`}${rec.flags ? `<div class="notice warn" style="margin-top:10px">${U.esc(rec.flags)}</div>` : ''}</div>` });
+      S.children = null; S.dash = null; if (done) done();
+    }
+  });
+}
+function drawGrowthCharts(child, g) {
+  const c = n => U.css(n);
+  const recs = g.records.filter(r => r.is_void !== 'TRUE');
+  const pts = (key) => recs.filter(r => r[key] !== '').map(r => ({ x: Math.round(Number(r.age_days) / 30.4375 * 10) / 10, y: Number(key === 'height_cm' ? (r.height_adj_cm || r.height_cm) : r[key]) }));
+  const ref = (name) => {
+    const cv = g.curves && g.curves[name]; if (!cv) return [];
+    const lab = ['-3SD', '-2SD', 'ค่ามัธยฐาน', '+2SD', '+3SD'];
+    return [1, 2, 3].map(i => ({ label: 'WHO ' + lab[i], data: cv.map(p => ({ x: p.m, y: p.sd[i] })), borderColor: i === 2 ? c('--axis') : c('--grid'), borderWidth: i === 2 ? 1.5 : 1.2, borderDash: i === 2 ? [] : [5, 4], pointRadius: 0, fill: false, order: 2 }));
+  };
+  const opts = (title, unit) => ({ responsive: true, maintainAspectRatio: false, parsing: false, plugins: { title: { display: true, text: title, font: { family: 'Kanit', size: 14, weight: '500' }, color: c('--text') }, legend: { display: true, position: 'bottom', labels: { boxWidth: 12, filter: i => !/SD/.test(i.text) || /2SD/.test(i.text) } },
+    tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} ${unit} (อายุ ${ctx.parsed.x} เดือน)` } } },
+    scales: { x: { type: 'linear', min: 0, max: 60, title: { display: true, text: 'อายุ (เดือน)' }, grid: { color: c('--grid') }, ticks: { stepSize: 6, color: c('--axis') } }, y: { title: { display: true, text: unit }, grid: { color: c('--grid') }, ticks: { color: c('--axis') } } } });
+  const mk = (id, cfg) => { if (S.charts[id]) S.charts[id].destroy(); const el = document.getElementById(id); if (el) S.charts[id] = new Chart(el, cfg); };
+  mk('gcW', { type: 'line', data: { datasets: [{ label: 'น้ำหนักของเด็ก', data: pts('weight_kg'), borderColor: c('--series-1'), backgroundColor: c('--series-1'), borderWidth: 2, pointRadius: 5, order: 1 }, ...ref('weight')] }, options: opts('น้ำหนักตามอายุ', 'กก.') });
+  mk('gcH', { type: 'line', data: { datasets: [{ label: 'ส่วนสูงของเด็ก', data: pts('height_cm'), borderColor: c('--series-2'), backgroundColor: c('--series-2'), borderWidth: 2, pointRadius: 5, order: 1 }, ...ref('height')] }, options: opts('ความยาว/ส่วนสูงตามอายุ', 'ซม.') });
+  const note = document.getElementById('gNote');
+  if (note) note.innerHTML = g.refLoaded ? `เส้นอ้างอิง WHO Child Growth Standards (${child.sex === '1' ? 'เด็กชาย' : 'เด็กหญิง'}) จากตารางที่ผู้ดูแลนำเข้า` : '<i class="fa-solid fa-circle-info"></i> ยังไม่มีตารางอ้างอิง WHO ในระบบ จึงแสดงเฉพาะค่าที่วัดได้ และสถานะการแปลผลเป็น "รอประเมิน" (ผู้ดูแลนำเข้าได้ที่ ข้อมูลและการตั้งค่า › ตารางอ้างอิง WHO)';
+}
+
+/* ---------------- GROWTH PAGE ---------------- */
+Pages.growth = {
+  async render(view, pid) {
+    view.innerHTML = `<div class="grid g-2"><div class="card"><div class="card-h"><h3><i class="fa-solid fa-weight-scale"></i> บันทึกน้ำหนัก/ส่วนสูง</h3></div><div id="gPick"></div><div id="gSel" style="margin-top:14px"></div></div>
+      <div class="card"><div class="card-h"><h3>เด็กที่ยังไม่มีผลชั่ง/วัดในปีงบประมาณนี้</h3></div><div id="gTodo">${UI.skeleton(3)}</div></div></div>`;
+    const pick = async c => {
+      const sel = document.getElementById('gSel');
+      sel.innerHTML = `<div class="child-card" style="cursor:default"><i class="fa-solid ${c.sex === '2' ? 'fa-person-dress' : 'fa-person'}" style="font-size:22px;color:var(--brand-600)"></i><div class="body"><b>${U.esc(c.name)} ${U.esc(c.lname)}</b><div class="small muted">${U.esc(c.ageText)} · ล่าสุด: ${c.growth ? U.fmtDate(c.growth.date) + ' ' + U.esc(c.growth.weight || '-') + ' กก. / ' + U.esc(c.growth.height || '-') + ' ซม.' : 'ยังไม่มีข้อมูล'}</div></div></div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn btn-primary" id="gGo"><i class="fa-solid fa-plus"></i> บันทึกผล</button><a class="btn btn-ghost" href="#/child/${encodeURIComponent(c.pid)}"><i class="fa-solid fa-chart-line"></i> ดู Growth Chart</a></div>`;
+      document.getElementById('gGo').addEventListener('click', () => openGrowthForm(c, () => { Router.render(); }));
+    };
+    await childPicker(document.getElementById('gPick'), pick, { pid });
+    const kids = await loadChildren();
+    const fyStart = (U.fiscalYear(U.todayISO()) - 544) + '-10-01';
+    const todo = kids.filter(c => c.active && (!c.growth || c.growth.date < fyStart));
+    const el = document.getElementById('gTodo');
+    el.innerHTML = `<div class="small muted" style="margin-bottom:8px">${todo.length} คน จาก ${kids.filter(c => c.active).length} คน</div>` + UI.table([{ key: 'name', label: 'ชื่อ-สกุล', render: c => U.esc(c.name + ' ' + c.lname) }, { key: 'ageText', label: 'อายุ', cls: 'nowrap' }, { key: 'vhid', label: 'หมู่', render: c => Number(c.vhid) }], todo.slice(0, 300), { onRow: true, empty: 'ทุกคนได้รับการชั่ง/วัดแล้ว' });
+    UI.bindRows(el, todo, c => openGrowthForm(c, () => Router.render()));
+  }
+};
+
+/* ---------------- DEVELOPMENT PAGE ---------------- */
+Pages.development = {
+  async render(view, pid) {
+    view.innerHTML = `<div class="grid g-2"><div class="card"><div class="card-h"><h3><i class="fa-solid fa-puzzle-piece"></i> ประเมินพัฒนาการ (DSPM)</h3></div><div id="dPick"></div><div id="dForm" style="margin-top:14px"></div></div>
+      <div class="card"><div class="card-h"><h3>รายการงานประเมินพัฒนาการ</h3><div class="sub">ถึงกำหนด · ใกล้ถึงกำหนด · ขาดการประเมิน · รอติดตามผล</div></div><div id="dTodo">${UI.skeleton(3)}</div></div></div>`;
+    await childPicker(document.getElementById('dPick'), c => this.form(c), { pid });
+    const kids = await loadChildren();
+    const order = { FOLLOW_OVERDUE: 0, MISSED: 1, WAIT_FOLLOW: 2, DUE: 3, UPCOMING: 4 };
+    const todo = kids.filter(c => c.active && order[c.devStatus] !== undefined).sort((a, b) => order[a.devStatus] - order[b.devStatus]);
+    const el = document.getElementById('dTodo');
+    el.innerHTML = UI.table([{ key: 'name', label: 'ชื่อ-สกุล', render: c => U.esc(c.name + ' ' + c.lname) }, { key: 'ageText', label: 'อายุ', cls: 'nowrap' }, { key: 'vhid', label: 'หมู่', render: c => Number(c.vhid) }, { key: 'd', label: 'สถานะ', render: c => UI.devBadge(c.devStatus) }], todo, { onRow: true, empty: 'ไม่มีงานค้าง' });
+    UI.bindRows(el, todo, c => { Router.go('#/development/' + encodeURIComponent(c.pid)); });
+  },
+  async form(child) {
+    const box = document.getElementById('dForm');
+    box.innerHTML = UI.skeleton(3);
+    const meta = S.meta, keyAges = meta.keyAges;
+    const detectKey = (date) => { for (const k of keyAges) { const s = U.addMonths(child.birth, k); if (date >= s && date <= U.addDays(s, 30)) return k; } return ''; };
+    box.innerHTML = `<form id="devForm" novalidate>
+      <div class="form-grid">
+        ${UI.field('assess_date', 'วันที่ประเมิน', { type: 'date', required: true, value: U.todayISO(), attrs: `max="${U.todayISO()}" min="${child.birth}" data-nofuture data-min="${child.birth}"` })}
+        ${UI.field('assess_type', 'ประเภทการประเมิน', { type: 'select', options: [['FIRST', 'คัดกรองครั้งแรก'], ['FOLLOWUP', 'ประเมินซ้ำหลังกระตุ้น 30 วัน']] })}
+        <div class="full"><div class="notice" id="dAgeInfo" style="margin:0"></div></div>
+        <div class="full" id="dItems"></div>
+        ${DOMAINS.map(([k, label]) => `<div class="full" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--border)"><span>${label}</span>
+          <div class="seg" data-domain="${k}"><label><input type="radio" name="${k}" value="PASS"><span>ผ่าน</span></label><label class="fail"><input type="radio" name="${k}" value="FAIL"><span>ไม่ผ่าน</span></label><label class="na"><input type="radio" name="${k}" value="NA" checked><span>ไม่ได้ประเมิน</span></label></div></div>`).join('')}
+        <div class="full"><div class="notice" id="dSum" style="margin:0"></div></div>
+        ${UI.field('advice', 'ข้อแนะนำแก่ผู้ปกครอง', { type: 'textarea', full: true, placeholder: 'เช่น วิธีกระตุ้นพัฒนาการตามคู่มือ DSPM' })}
+        ${UI.field('referral', 'การส่งต่อ', { type: 'select', options: [['N', 'ไม่ส่งต่อ'], ['Y', 'ส่งต่อ']] })}
+        ${UI.field('referral_place', 'สถานที่ส่งต่อ', { placeholder: 'เช่น รพ.ขอนแก่น (TEDA4I)' })}
+        ${UI.field('assessor', 'ผู้ประเมิน', { required: true, value: S.user.full_name })}
+        ${UI.field('tool', 'แบบประเมิน', { value: 'DSPM' })}
+        ${UI.field('note', 'หมายเหตุ', { full: true })}
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> บันทึกผลการประเมิน</button></div></form>`;
+    const form = document.getElementById('devForm');
+    let items = [];
+    const summary = () => {
+      const v = DOMAINS.map(([k]) => form.querySelector(`input[name=${k}]:checked`).value);
+      const st = v.includes('FAIL') ? 'SUSPECT' : v.every(x => x === 'PASS') ? 'NORMAL' : 'PENDING';
+      const txt = { NORMAL: '<b style="color:var(--st-good-ink)">สมวัย</b> — ผ่านทั้ง 5 ด้าน', SUSPECT: '<b style="color:var(--st-critical-ink)">สงสัยล่าช้า/ต้องกระตุ้นพัฒนาการ</b> — ' + (form.assess_type.value === 'FIRST' ? 'ระบบจะสร้างนัดประเมินซ้ำใน 30 วัน' : 'พิจารณาส่งต่อ'), PENDING: '<b>รอประเมิน</b> — ยังประเมินไม่ครบทุกด้าน' };
+      document.getElementById('dSum').innerHTML = '<i class="fa-solid fa-clipboard-check"></i><div>สรุปผล: ' + txt[st] + '</div>';
+    };
+    const syncItems = () => {
+      if (!items.length) return;
+      DOMAINS.forEach(([k]) => {
+        const its = items.filter(i => i.domain === k); if (!its.length) return;
+        const res = its.map(i => form.querySelector(`input[name="it_${i.item_no}"]:checked`)?.value || 'NA');
+        const v = res.includes('FAIL') ? 'FAIL' : res.every(x => x === 'PASS') ? 'PASS' : 'NA';
+        form.querySelector(`input[name=${k}][value=${v}]`).checked = true;
+        form.querySelectorAll(`input[name=${k}]`).forEach(x => x.disabled = true);
+      });
+      summary();
+    };
+    const updAge = async () => {
+      const date = form.assess_date.value; const a = U.age(child.birth, date);
+      if (!a || a.days < 0) { document.getElementById('dAgeInfo').innerHTML = 'วันที่ไม่ถูกต้อง'; return; }
+      const k = detectKey(date);
+      document.getElementById('dAgeInfo').innerHTML = `<i class="fa-solid fa-cake-candles"></i><div>อายุ ณ วันที่ประเมิน: <b>${a.text}</b> (${a.totalMonths} เดือน) · ${k ? `อยู่ในช่วงคัดกรองอายุเป้าหมาย <b>${k} เดือน</b>` : 'ไม่อยู่ในช่วงอายุเป้าหมาย (บันทึกได้ แต่ไม่นับในตัวชี้วัดอายุเป้าหมาย)'}</div>`;
+      const box = document.getElementById('dItems');
+      if (!meta.hasItemMaster) { box.innerHTML = '<div class="notice warn" style="margin:0"><i class="fa-solid fa-book-medical"></i><div>ยังไม่ได้นำเข้ารายการข้อประเมินจากคู่มือ DSPM ฉบับที่หน่วยงานรับรอง — ให้ประเมินตามคู่มือฉบับจริงแล้วบันทึกผลรายด้านด้านล่าง (ระบบไม่สร้างข้อคำถามขึ้นเอง)</div></div>'; items = []; return; }
+      try {
+        const r = await API.call('getDevItems', { ageMonths: a.totalMonths });
+        items = r.items;
+        form.querySelectorAll('.seg input').forEach(x => x.disabled = false);
+        box.innerHTML = items.length ? `<h4 style="margin:6px 0">ข้อประเมินตามช่วงอายุ (${items.length} ข้อ)</h4>` + items.map(i => `<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 0;border-bottom:1px dashed var(--border)"><span class="small"><b>ข้อ ${U.esc(i.item_no)}</b> [${U.esc(i.domain.toUpperCase())}] ${U.esc(i.item_text)}</span>
+          <div class="seg"><label><input type="radio" name="it_${U.esc(i.item_no)}" value="PASS"><span>ผ่าน</span></label><label class="fail"><input type="radio" name="it_${U.esc(i.item_no)}" value="FAIL"><span>ไม่ผ่าน</span></label><label class="na"><input type="radio" name="it_${U.esc(i.item_no)}" value="NA" checked><span>ไม่ได้ประเมิน</span></label></div></div>`).join('')
+          : '<div class="hint">ไม่มีข้อประเมินในคลังสำหรับอายุนี้ — บันทึกผลรายด้าน</div>';
+        box.querySelectorAll('input').forEach(x => x.addEventListener('change', syncItems));
+        syncItems();
+      } catch (e) { box.innerHTML = '<div class="hint">โหลดข้อประเมินไม่สำเร็จ: ' + U.esc(e.message) + '</div>'; }
+    };
+    form.assess_date.addEventListener('change', updAge);
+    form.assess_type.addEventListener('change', summary);
+    form.querySelectorAll('.seg[data-domain] input').forEach(x => x.addEventListener('change', summary));
+    updAge(); summary();
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const errs = Validate.form(form);
+      if (errs.length) { Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบถ้วน', html: errs.join('<br>') }); return; }
+      const d = U.formData(form);
+      DOMAINS.forEach(([k]) => { d[k] = form.querySelector(`input[name=${k}]:checked`).value; });
+      d.items = items.map(i => ({ item_no: i.item_no, domain: i.domain, item_text: i.item_text, result: form.querySelector(`input[name="it_${i.item_no}"]:checked`)?.value || 'NA' }));
+      Object.keys(d).filter(k => k.startsWith('it_')).forEach(k => delete d[k]);
+      if (DOMAINS.every(([k]) => d[k] === 'NA')) { Swal.fire({ icon: 'warning', title: 'ยังไม่ได้บันทึกผลการประเมิน', text: 'กรุณาบันทึกผลอย่างน้อย 1 ด้าน' }); return; }
+      if (!(await UI.confirm('ยืนยันบันทึกผลการประเมิน', `${U.esc(child.name)} ${U.esc(child.lname)} วันที่ ${U.fmtDate(d.assess_date)}`))) return;
+      const btn = form.querySelector('button[type=submit]'); btn.disabled = true;
+      try {
+        const r = await API.call('saveDevelopment', { pid: child.pid, ...d }, { write: true });
+        S.children = null; S.dash = null;
+        await Swal.fire({ icon: 'success', title: 'บันทึกเรียบร้อย', html: `ผลสรุป: <b>${RES_TEXT[r.record.overall]}</b>${r.record.followup_due ? `<br>นัดประเมินซ้ำ: <b>${U.fmtDate(r.record.followup_due)}</b>` : ''}`, confirmButtonColor: '#059669' });
+        Router.go('#/child/' + encodeURIComponent(child.pid));
+      } catch (err) { UI.error(err, 'บันทึกไม่สำเร็จ'); } finally { btn.disabled = false; }
+    });
+  }
+};
+
+/* ---------------- FOLLOW-UP ---------------- */
+function followupTable(cases) {
+  return UI.table([
+    { key: 'u', label: '', render: x => `<span class="dot ${x.urgency}"></span>` },
+    { key: 'name', label: 'เด็ก', render: x => `<a href="#/child/${encodeURIComponent(x.pid)}">${U.esc(x.name)}</a><div class="small muted">หมู่ ${Number(x.vhid)}</div>` },
+    { key: 'problem_type', label: 'ปัญหา', render: x => U.esc(FOLLOW_TYPE[x.problem_type] || x.problem_type) },
+    { key: 'problem_date', label: 'วันที่พบ', render: x => U.fmtDate(x.problem_date) },
+    { key: 'due', label: 'กำหนดติดตาม', render: x => U.fmtDate(x.due) + (x.overdueDays ? `<div class="small" style="color:var(--st-critical-ink)">เกิน ${x.overdueDays} วัน</div>` : '') },
+    { key: 'status', label: 'สถานะ', render: x => UI.badge(FOLLOW_STATUS[x.status] || x.status, x.closed ? 'green' : x.urgency) },
+    { key: 'responsible', label: 'ผู้รับผิดชอบ' },
+    { key: 'h', label: 'ครั้ง', render: x => x.history.length },
+    { key: 'a', label: '', render: (x) => `<button class="btn btn-ghost btn-sm" data-case="${U.esc(x.case_id)}"><i class="fa-solid fa-pen-to-square"></i> ${x.closed ? 'ดู' : 'บันทึกผล'}</button>` }
+  ], cases, { empty: 'ไม่มีเคสติดตาม' });
+}
+function bindFollowupTable(el, cases, done) {
+  el.querySelectorAll('[data-case]').forEach(b => b.addEventListener('click', () => { const x = cases.find(c => c.case_id === b.dataset.case); openFollowupUpdate(x, done); }));
+}
+function responsibleOptions(cur) {
+  const vols = (S.meta.volunteers || []).map(v => [v.username, `${v.full_name} (${ROLE_TEXT[v.role]}${v.villages.length ? ' หมู่ ' + v.villages.join(',') : ''})`]);
+  const opts = [[S.user.username, S.user.full_name + ' (ตนเอง)']].concat(vols.filter(v => v[0] !== S.user.username));
+  if (cur && !opts.some(o => o[0] === cur)) opts.push([cur, cur]);
+  return opts;
+}
+function openFollowupForm(pre, done) {
+  UI.modal({
+    title: 'เปิดเคสติดตาม — ' + (pre.name || ''),
+    body: `${pre.note ? `<div class="notice"><i class="fa-solid fa-bell"></i><div>${U.esc(pre.note)}</div></div>` : ''}<div class="form-grid">
+      ${UI.field('problem_type', 'ประเภทปัญหา', { type: 'select', required: true, value: pre.problem_type, options: [['', '-- เลือก --']].concat(Object.entries(FOLLOW_TYPE)) })}
+      ${UI.field('problem_date', 'วันที่พบปัญหา', { type: 'date', required: true, value: U.todayISO(), attrs: 'data-nofuture' })}
+      ${UI.field('due_date', 'วันที่นัดติดตาม', { type: 'date', required: true, value: U.addDays(U.todayISO(), 7) })}
+      ${UI.field('responsible', 'ผู้รับผิดชอบ', { type: 'select', options: responsibleOptions() })}
+      ${UI.field('method', 'วิธีการติดตาม', { type: 'select', options: FOLLOW_METHODS })}
+      ${UI.field('status', 'สถานะ', { type: 'select', value: 'WAITING', options: [['WAITING', FOLLOW_STATUS.WAITING], ['SCHEDULED', FOLLOW_STATUS.SCHEDULED], ['IN_PROGRESS', FOLLOW_STATUS.IN_PROGRESS]] })}
+      ${UI.field('recommendation', 'ข้อเสนอแนะ', { type: 'textarea', full: true })}</div>`,
+    onSubmit: async d => {
+      await API.call('saveFollowup', { pid: pre.pid, ...d }, { write: true });
+      UI.toast('เปิดเคสติดตามเรียบร้อย'); S.dash = null; S.children = null; if (done) done();
+    }
+  });
+}
+function openFollowupUpdate(x, done) {
+  const hist = x.history.slice().reverse().map(h => `<div class="alert-item ${['SUCCESS', 'REFERRED'].includes(h.status) ? 'green' : h.status === 'LOST' ? 'red' : 'yellow'}" style="padding:8px 12px"><div class="body small"><b>${U.esc(FOLLOW_STATUS[h.status])}</b> · ${U.fmtDateTime(h.created_at)} โดย ${U.esc(h.created_by)}${h.method ? ' · ' + U.esc(h.method) : ''}${h.actual_date ? ' · ติดตามจริง ' + U.fmtDate(h.actual_date) : ''}${h.result ? '<div>ผล: ' + U.esc(h.result) + '</div>' : ''}${h.recommendation ? '<div>ข้อเสนอแนะ: ' + U.esc(h.recommendation) + '</div>' : ''}${h.next_due ? '<div>นัดครั้งถัดไป: ' + U.fmtDate(h.next_due) + '</div>' : ''}</div></div>`).join('');
+  UI.modal({
+    title: `${FOLLOW_TYPE[x.problem_type] || ''} — ${x.name}`, hideSubmit: x.closed, submitText: 'บันทึกผลการติดตาม',
+    body: `<div class="small muted" style="margin-bottom:10px">เลขเคส ${U.esc(x.case_id)} · พบปัญหา ${U.fmtDate(x.problem_date)} · กำหนด ${U.fmtDate(x.due)}</div>
+      ${x.closed ? '' : `<div class="form-grid">
+      ${UI.field('status', 'สถานะ', { type: 'select', required: true, value: x.status, options: Object.entries(FOLLOW_STATUS) })}
+      ${UI.field('actual_date', 'วันที่ติดตามจริง', { type: 'date', value: U.todayISO(), attrs: 'data-nofuture' })}
+      ${UI.field('method', 'วิธีการติดตาม', { type: 'select', options: FOLLOW_METHODS })}
+      ${UI.field('responsible', 'ผู้รับผิดชอบ', { type: 'select', value: x.responsible, options: responsibleOptions(x.responsible) })}
+      ${UI.field('result', 'ผลการติดตาม', { type: 'textarea', full: true, hint: 'จำเป็นเมื่อสถานะเป็น ติดตามสำเร็จ / ส่งต่อ / ขาดการติดต่อ' })}
+      ${UI.field('recommendation', 'ข้อเสนอแนะ', { type: 'textarea', full: true })}
+      ${UI.field('next_due', 'วันนัดครั้งถัดไป', { type: 'date' })}</div>`}
+      <h4 style="margin:16px 0 8px">ประวัติการติดตาม (${x.history.length} ครั้ง)</h4>${hist}`,
+    onSubmit: async d => {
+      if (['SUCCESS', 'REFERRED', 'LOST'].includes(d.status) && !d.result) throw new ApiError('VALIDATION', 'กรุณาบันทึกผลการติดตาม');
+      await API.call('saveFollowup', { pid: x.pid, case_id: x.case_id, ...d }, { write: true });
+      UI.toast('บันทึกผลการติดตามเรียบร้อย'); S.dash = null; S.children = null; if (done) done();
+    }
+  });
+}
+Pages.followup = {
+  tab: 'cases',
+  async render(view) {
+    view.innerHTML = `<div class="card"><div class="tabs" id="fTabs"><button data-t="cases">เคสติดตาม</button><button data-t="detect">รายการที่ระบบตรวจพบ</button><button data-t="missed">เด็กขาดนัด</button></div>
+      <div class="toolbar"><label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="fClosed"> แสดงเคสที่ปิดแล้ว</label>${S.user.role === 'VOLUNTEER' ? '<label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="fMine" checked> เฉพาะที่ได้รับมอบหมาย</label>' : ''}<div class="grow"></div>
+      <span class="small muted"><span class="dot red"></span> เกินกำหนด <span class="dot yellow"></span> ภายใน 7 วัน <span class="dot green"></span> ยังไม่ถึงกำหนด/ปิดแล้ว</span></div><div id="fBody">${UI.skeleton(4)}</div></div>`;
+    const draw = async () => {
+      view.querySelectorAll('#fTabs button').forEach(b => b.classList.toggle('active', b.dataset.t === this.tab));
+      const el = document.getElementById('fBody'); el.innerHTML = UI.skeleton(4);
+      if (this.tab === 'cases') {
+        const r = await API.call('getFollowupList', { includeClosed: document.getElementById('fClosed').checked, mineOnly: document.getElementById('fMine')?.checked });
+        el.innerHTML = followupTable(r.cases); bindFollowupTable(el, r.cases, draw);
+      } else if (this.tab === 'detect') {
+        const r = await API.call('getAlerts', {});
+        const list = r.alerts.filter(a => ALERT_TO_FOLLOW[a.type] && a.level !== 'yellow');
+        el.innerHTML = UI.table([{ key: 'l', label: '', render: a => `<span class="dot ${a.level}"></span>` }, { key: 'name', label: 'เด็ก', render: a => `<a href="#/child/${encodeURIComponent(a.pid)}">${U.esc(a.name)}</a>` }, { key: 'vhid', label: 'หมู่', render: a => Number(a.vhid) },
+          { key: 'text', label: 'รายละเอียด' }, { key: 'b', label: '', render: (a) => `<button class="btn btn-primary btn-sm" data-pid="${U.esc(a.pid)}" data-type="${a.type}"><i class="fa-solid fa-user-clock"></i> เปิดเคส</button>` }], list, { empty: 'ไม่พบรายการที่ต้องติดตาม' });
+        el.querySelectorAll('button[data-pid]').forEach(b => b.addEventListener('click', () => { const a = list.find(x => x.pid === b.dataset.pid && x.type === b.dataset.type); openFollowupForm({ pid: a.pid, name: a.name, problem_type: ALERT_TO_FOLLOW[a.type], note: a.text }, draw); }));
+      } else {
+        const r = await API.call('getAppointments', { missedOnly: true });
+        el.innerHTML = apptTable(r.appointments, true); bindApptTable(el, r.appointments, draw);
+      }
+    };
+    view.querySelectorAll('#fTabs button').forEach(b => b.addEventListener('click', () => { this.tab = b.dataset.t; draw().catch(UI.error); }));
+    document.getElementById('fClosed').addEventListener('change', () => draw().catch(UI.error));
+    document.getElementById('fMine')?.addEventListener('change', () => draw().catch(UI.error));
+    await draw();
+  }
+};
+
+/* ---------------- APPOINTMENTS (shared) ---------------- */
+function apptTable(list, withChild) {
+  return UI.table([
+    ...(withChild ? [{ key: 'name', label: 'เด็ก', render: a => `<a href="#/child/${encodeURIComponent(a.pid)}">${U.esc(a.name)}</a><div class="small muted">หมู่ ${Number(a.vhid)}</div>` }] : []),
+    { key: 'appt_type', label: 'ประเภทนัด', render: a => U.esc(APPT_TYPE[a.appt_type] || a.appt_type) },
+    { key: 'appt_date', label: 'วันนัด', render: a => U.fmtDate(a.appt_date) },
+    { key: 'status', label: 'สถานะ', render: a => a.overdue ? UI.badge('เลยนัด', 'red', 'fa-circle-exclamation') : UI.badge(APPT_STATUS[a.status] || a.status, a.status === 'DONE' ? 'green' : a.status === 'MISSED' ? 'red' : a.status === 'CANCELLED' ? 'gray' : 'yellow') },
+    { key: 'note', label: 'หมายเหตุ' },
+    { key: 'x', label: '', render: a => (a.status === 'PENDING' || (a.status === 'MISSED' && can('ADMIN', 'STAFF'))) ? `<div style="display:flex;gap:4px">${can('ADMIN', 'STAFF') ? `<button class="btn btn-ghost btn-sm" data-ap="${U.esc(a.appt_id)}" data-st="DONE">มาตามนัด</button>` : ''}${a.status === 'PENDING' ? `<button class="btn btn-ghost btn-sm" data-ap="${U.esc(a.appt_id)}" data-st="MISSED">แจ้งขาดนัด</button>` : ''}</div>` : '' }
+  ], list, { empty: 'ไม่มีนัดหมาย' });
+}
+function bindApptTable(el, list, done) {
+  el.querySelectorAll('[data-ap]').forEach(b => b.addEventListener('click', async () => {
+    const st = b.dataset.st;
+    if (!(await UI.confirm(st === 'DONE' ? 'บันทึกว่ามาตามนัด?' : 'แจ้งเด็กขาดนัด?', ''))) return;
+    try { UI.loading(true, 'กำลังบันทึก...'); await API.call('updateAppointment', { appt_id: b.dataset.ap, status: st }, { write: true }); UI.toast('บันทึกเรียบร้อย'); S.dash = null; S.children = null; done(); }
+    catch (e) { UI.error(e); } finally { UI.loading(false); }
+  }));
+}
+function openApptForm(child, done) {
+  UI.modal({
+    title: 'เพิ่มนัดหมาย — ' + child.name + ' ' + child.lname, size: 'sm',
+    body: `<div class="form-grid" style="grid-template-columns:1fr">${UI.field('appt_type', 'ประเภทนัด', { type: 'select', required: true, options: Object.entries(APPT_TYPE) })}
+      ${UI.field('appt_date', 'วันนัด', { type: 'date', required: true })}${UI.field('note', 'หมายเหตุ', {})}</div>`,
+    onSubmit: async d => { await API.call('saveAppointment', { pid: child.pid, ...d }, { write: true }); UI.toast('เพิ่มนัดหมายเรียบร้อย'); if (done) done(); }
+  });
+}
+
+/* ---------------- HOME VISIT ---------------- */
+function visitTable(list, staff, withChild) {
+  return UI.table([
+    { key: 'visit_date', label: 'วันที่เยี่ยม', render: v => U.fmtDate(v.visit_date) },
+    ...(withChild ? [{ key: 'name', label: 'เด็ก', render: v => `<a href="#/child/${encodeURIComponent(v.pid)}">${U.esc(v.name)}</a><div class="small muted">หมู่ ${Number(v.vhid)}</div>` }] : []),
+    { key: 'visitor', label: 'ผู้เยี่ยม', render: v => U.esc(v.visitor) + `<div class="small muted">${U.esc(ROLE_TEXT[v.visitor_role] || '')}</div>` },
+    { key: 'guardian_met', label: 'ผู้ปกครองที่พบ' }, { key: 'problems', label: 'ปัญหาที่พบ' }, { key: 'advice', label: 'คำแนะนำ' }, { key: 'referral', label: 'ส่งต่อ' },
+    { key: 'next_visit_date', label: 'นัดครั้งต่อไป', render: v => U.fmtDate(v.next_visit_date) },
+    { key: 'd', label: '', render: v => `<button class="btn btn-ghost btn-sm" data-vd="${U.esc(v.visit_id)}"><i class="fa-regular fa-eye"></i></button>${staff && v.is_void !== 'TRUE' ? `<button class="btn btn-ghost btn-sm" data-void="VISIT|${U.esc(v.visit_id)}"><i class="fa-solid fa-ban"></i></button>` : ''}` }
+  ], list, { rowClass: v => v.is_void === 'TRUE' ? 'void' : '', empty: 'ยังไม่มีบันทึกการเยี่ยมบ้าน' }).replace(/data-vd="([^"]+)"/g, (m, id) => m + ` onclick="showVisit('${id}')"`);
+}
+let VISIT_CACHE = [];
+function showVisit(id) {
+  const v = VISIT_CACHE.find(x => x.visit_id === id) || (Pages.child.D?.visits || []).find(x => x.visit_id === id); if (!v) return;
+  const row = (l, x) => x ? `<dt>${l}</dt><dd>${U.esc(x)}</dd>` : '';
+  Swal.fire({ title: 'บันทึกการเยี่ยมบ้าน ' + U.fmtDate(v.visit_date), width: 640, confirmButtonColor: '#059669', html: `<dl class="kv" style="text-align:left">${row('บ้านเลขที่', v.house_no)}${row('ผู้เยี่ยม', v.visitor)}${row('ผู้ปกครองที่พบ', v.guardian_met)}${row('สภาพแวดล้อม', v.environment)}${row('การเลี้ยงดู', v.parenting)}${row('อาหารและโภชนาการ', v.nutrition)}${row('สุขภาพทั่วไป', v.general_health)}${row('พัฒนาการ', v.development)}${row('ปัญหาที่พบ', v.problems)}${row('คำแนะนำ', v.advice)}${row('การส่งต่อ', v.referral)}${row('นัดครั้งต่อไป', U.fmtDate(v.next_visit_date))}${v.is_void === 'TRUE' ? row('ยกเลิก', v.void_reason) : ''}</dl>` });
+}
+Pages.visits = {
+  async render(view, pid) {
+    view.innerHTML = `<div class="grid g-2"><div class="card"><div class="card-h"><h3><i class="fa-solid fa-house-medical"></i> บันทึกการเยี่ยมบ้าน</h3></div><div id="vPick"></div><div id="vForm" style="margin-top:14px"></div></div>
+      <div class="card"><div class="card-h"><h3>การเยี่ยมบ้านล่าสุด (90 วัน)</h3></div><div id="vList">${UI.skeleton(3)}</div></div></div>`;
+    await childPicker(document.getElementById('vPick'), c => this.form(c), { pid });
+    const r = await API.call('getHomeVisits', { from: U.addDays(U.todayISO(), -90) });
+    VISIT_CACHE = r.visits;
+    document.getElementById('vList').innerHTML = visitTable(r.visits, false, true);
+  },
+  form(child) {
+    const box = document.getElementById('vForm');
+    const ta = (n, l, ph) => UI.field(n, l, { type: 'textarea', full: true, placeholder: ph });
+    box.innerHTML = `<form id="hvForm" novalidate><div class="form-grid">
+      <div class="full small muted">หมู่บ้าน: หมู่ ${Number(child.vhid)} ${U.esc(U.vName(child.vhid).startsWith('หมู่') ? '' : U.vName(child.vhid))}</div>
+      ${UI.field('house_no', 'บ้านเลขที่', { value: child.addr })}
+      ${UI.field('visit_date', 'วันที่เยี่ยม', { type: 'date', required: true, value: U.todayISO(), attrs: `max="${U.todayISO()}" data-nofuture data-min="${child.birth}"` })}
+      ${UI.field('visitor', 'ผู้เยี่ยม', { required: true, value: S.user.full_name })}
+      ${UI.field('guardian_met', 'ผู้ปกครองที่พบ', { placeholder: 'เช่น มารดา ยาย' })}
+      ${ta('environment', 'สภาพแวดล้อม', 'ความปลอดภัย สุขาภิบาล สภาพบ้าน')}${ta('parenting', 'การเลี้ยงดู', 'ผู้เลี้ยงดูหลัก การเล่น การอ่านหนังสือ การใช้หน้าจอ')}
+      ${ta('nutrition', 'อาหารและโภชนาการ', 'การกินนม อาหารตามวัย')}${ta('general_health', 'สุขภาพทั่วไป', '')}${ta('development', 'พัฒนาการ', 'ข้อสังเกตด้านพัฒนาการ')}
+      ${ta('problems', 'ปัญหาที่พบ', '')}${ta('advice', 'คำแนะนำ', '')}
+      ${UI.field('referral', 'การส่งต่อ', { placeholder: 'ถ้ามี ระบุหน่วยงาน' })}
+      ${UI.field('next_visit_date', 'วันนัดเยี่ยมครั้งต่อไป', { type: 'date' })}</div>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> บันทึกการเยี่ยมบ้าน</button></div></form>`;
+    const form = document.getElementById('hvForm');
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const errs = Validate.form(form); if (errs.length) { Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบถ้วน', html: errs.join('<br>') }); return; }
+      const d = U.formData(form);
+      if (d.next_visit_date && d.next_visit_date <= d.visit_date) { UI.error(new ApiError('VALIDATION', 'วันนัดครั้งต่อไปต้องหลังวันที่เยี่ยม')); return; }
+      const btn = form.querySelector('button[type=submit]'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+      try { await API.call('saveHomeVisit', { pid: child.pid, ...d }, { write: true }); S.dash = null; S.children = null; await Swal.fire({ icon: 'success', title: 'บันทึกการเยี่ยมบ้านเรียบร้อย', confirmButtonColor: '#059669' }); Router.render(); }
+      catch (err) { UI.error(err, 'บันทึกไม่สำเร็จ'); } finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกการเยี่ยมบ้าน'; }
+    });
+  }
+};
+
+/* ---------------- VACCINATION ---------------- */
+function vaccTable(list, staff) {
+  return UI.table([{ key: 'service_date', label: 'วันที่', render: v => U.fmtDate(v.service_date) }, { key: 'service_type', label: 'ประเภท', render: v => SERVICE_TYPE[v.service_type] || v.service_type },
+    { key: 'vaccine_name', label: 'วัคซีน' }, { key: 'dose_no', label: 'เข็มที่' }, { key: 'lot_no', label: 'Lot' }, { key: 'place', label: 'สถานที่' }, { key: 'health_note', label: 'รายละเอียด/ปัญหาสุขภาพ' }, { key: 'referral', label: 'ส่งต่อ' }, { key: 'provider', label: 'ผู้ให้บริการ' },
+    { key: 'x', label: '', render: v => v.is_void === 'TRUE' ? `<span class="small">ยกเลิก: ${U.esc(v.void_reason)}</span>` : staff ? `<button class="btn btn-ghost btn-sm" data-void="VACC|${U.esc(v.vacc_id)}"><i class="fa-solid fa-ban"></i></button>` : '' }],
+  list, { rowClass: v => v.is_void === 'TRUE' ? 'void' : '', empty: 'ยังไม่มีบันทึก — ระบบแสดงเฉพาะประวัติที่มีหลักฐานการบันทึกเท่านั้น' });
+}
+function openVaccForm(child, done) {
+  const vl = S.meta.vaccineList || [];
+  UI.modal({
+    title: 'บันทึกวัคซีน/บริการสุขภาพ — ' + child.name + ' ' + child.lname,
+    body: `${vl.length ? '' : '<div class="notice warn"><i class="fa-solid fa-circle-info"></i><div>ยังไม่ได้กำหนดรายชื่อวัคซีนตามประกาศกระทรวงสาธารณสุข (ตั้งค่า VACCINE_LIST) — กรอกชื่อวัคซีนตามบัตรบันทึกสุขภาพได้</div></div>'}
+      <div class="form-grid">
+      ${UI.field('service_type', 'ประเภทบริการ', { type: 'select', required: true, options: Object.entries(SERVICE_TYPE) })}
+      ${UI.field('service_date', 'วันที่รับบริการ', { type: 'date', required: true, value: U.todayISO(), attrs: `max="${U.todayISO()}" data-nofuture data-min="${child.birth}"` })}
+      ${vl.length ? UI.field('vaccine_name', 'ชนิดวัคซีน', { type: 'select', options: [['', '-- เลือก --']].concat(vl) }) : UI.field('vaccine_name', 'ชนิดวัคซีน', {})}
+      ${UI.field('dose_no', 'เข็มที่', { type: 'number', attrs: 'min="1" max="10"' })}
+      ${UI.field('lot_no', 'Lot No.', {})}${UI.field('place', 'สถานที่รับบริการ', { value: S.meta.hosname })}
+      ${UI.field('health_note', 'การตรวจสุขภาพ/ปัญหาสุขภาพ', { type: 'textarea', full: true })}
+      ${UI.field('referral', 'การส่งต่อ', {})}${UI.field('provider', 'ผู้ให้บริการ/ผู้บันทึก', { required: true, value: S.user.full_name })}</div>
+      <div class="hint">ระบบไม่คำนวณวันนัดหรือสถานะวัคซีนจากข้อมูลที่ไม่มีหลักฐาน</div>`,
+    onSubmit: async d => {
+      if (d.service_type === 'VACCINE' && !d.vaccine_name) throw new ApiError('VALIDATION', 'กรุณาระบุชนิดวัคซีน');
+      await API.call('saveVaccination', { pid: child.pid, ...d }, { write: true }); UI.toast('บันทึกเรียบร้อย'); if (done) done();
+    }
+  });
+}
+Pages.vaccination = {
+  async render(view, pid) {
+    view.innerHTML = `<div class="card"><div class="card-h"><h3><i class="fa-solid fa-syringe"></i> วัคซีนและบริการสุขภาพเด็ก</h3></div><div id="vcPick"></div><div id="vcBody" style="margin-top:14px"></div></div>`;
+    await childPicker(document.getElementById('vcPick'), async c => {
+      const el = document.getElementById('vcBody'); el.innerHTML = UI.skeleton(3);
+      const r = await API.call('getVaccinations', { pid: c.pid });
+      el.innerHTML = `<div class="toolbar"><button class="btn btn-primary" id="vcAdd"><i class="fa-solid fa-plus"></i> บันทึกวัคซีน/บริการ</button><a class="btn btn-ghost" href="#/child/${encodeURIComponent(c.pid)}">ดูประวัติทั้งหมด / ยกเลิกรายการ</a></div>` + vaccTable(r.records, false);
+      document.getElementById('vcAdd').addEventListener('click', () => openVaccForm(c, () => Router.render()));
+    }, { pid });
+  }
+};
+
+/* ---------------- VILLAGES ---------------- */
+Pages.villages = {
+  async render(view) {
+    const r = await API.call('getVillageData');
+    const vs = r.villages;
+    const sum = k => vs.reduce((n, v) => n + v[k], 0);
+    view.innerHTML = `<div class="kpis">${[['fa-map-location-dot', 'หมู่บ้าน', vs.length], ['fa-children', 'เด็กทั้งหมด', sum('total')], ['fa-puzzle-piece', 'คัดกรอง DSPM ปีงบ ' + r.fiscalYear, `${sum('screened')}/${sum('target')}`], ['fa-user-clock', 'ต้องติดตาม', sum('needFollow')]].map(([i, l, v]) => `<div class="kpi"><div class="ic"><i class="fa-solid ${i}"></i></div><div class="lbl">${l}</div><div class="val num">${v}</div></div>`).join('')}</div>
+      <div class="card"><div class="card-h"><h3>ผลการดำเนินงานรายหมู่บ้าน ปีงบประมาณ ${r.fiscalYear}</h3><div class="sub">เป้าหมาย DSPM = เด็กที่ครบอายุเป้าหมายตั้งแต่ ${U.fmtDate(r.period.from)} ถึงวันนี้ · เยี่ยมบ้าน = มีการเยี่ยมในปีงบประมาณ</div></div>
+      ${UI.table([{ key: 'vhid', label: 'หมู่', render: v => Number(v.vhid) }, { key: 'name', label: 'ชื่อหมู่บ้าน', render: v => U.esc(v.info.village_name) }, { key: 'vol', label: 'อสม. ผู้รับผิดชอบ', render: v => U.esc((v.info.volunteers || []).join(', ') || '-') },
+        { key: 'total', label: 'เด็ก', cls: 'num' }, { key: 'target', label: 'เป้าหมาย DSPM', cls: 'num' }, { key: 'screened', label: 'ประเมินแล้ว', cls: 'num', render: v => `${v.screened} <span class="small muted">(${U.pct(v.screened, v.target)}%)</span>` },
+        { key: 'notScreened', label: 'ยังไม่ประเมิน', cls: 'num' }, { key: 'normal', label: 'สมวัย', cls: 'num' }, { key: 'suspect', label: 'ต้องกระตุ้น', cls: 'num' }, { key: 'needFollow', label: 'ต้องติดตาม', cls: 'num' }, { key: 'visited', label: 'เยี่ยมบ้าน', cls: 'num' },
+        { key: 'x', label: '', render: v => can('ADMIN') ? `<button class="btn btn-ghost btn-sm" data-v="${v.vhid}"><i class="fa-solid fa-pen"></i></button>` : '' }], vs, { empty: 'ยังไม่มีข้อมูลหมู่บ้าน' })}</div>`;
+    view.querySelectorAll('[data-v]').forEach(b => b.addEventListener('click', () => this.edit(vs.find(v => v.vhid === b.dataset.v))));
+  },
+  async edit(v) {
+    const users = (await API.call('getUsers')).users.filter(u => u.active && u.role === 'VOLUNTEER');
+    const cur = v.info.volunteers || [];
+    UI.modal({
+      title: 'ตั้งค่าหมู่ที่ ' + Number(v.vhid), size: 'sm',
+      body: `<div class="form-grid" style="grid-template-columns:1fr">${UI.field('village_name', 'ชื่อหมู่บ้าน', { value: /^หมู่ที่/.test(v.info.village_name) ? '' : v.info.village_name })}
+        <div><label class="f">อสม. ผู้รับผิดชอบ</label>${users.length ? users.map(u => `<label class="small" style="display:flex;gap:8px;padding:4px 0"><input type="checkbox" name="vol" value="${U.esc(u.username)}" ${cur.includes(u.username) ? 'checked' : ''}> ${U.esc(u.full_name)} (${U.esc(u.username)}) · หมู่ ${U.esc(u.villages.join(','))}</label>`).join('') : '<div class="hint">ยังไม่มีบัญชี อสม. — สร้างได้ที่เมนูผู้ใช้งาน</div>'}
+        <div class="hint">สิทธิ์การเห็นข้อมูลของ อสม. กำหนดจาก "หมู่บ้านที่รับผิดชอบ" ในบัญชีผู้ใช้</div></div>${UI.field('note', 'หมายเหตุ', { value: v.info.note })}</div>`,
+      onSubmit: async (d, form) => {
+        const vols = [...form.querySelectorAll('input[name=vol]:checked')].map(x => x.value);
+        await API.call('saveVillage', { vhid: v.vhid, village_name: d.village_name, volunteer_usernames: vols.join(','), note: d.note }, { write: true });
+        S.meta = await API.call('getMeta'); UI.toast('บันทึกเรียบร้อย'); Router.render();
+      }
+    });
+  }
+};
+
+/* ---------------- REPORTS ---------------- */
+Pages.reports = {
+  async render(view) {
+    const fy = U.fiscalYear(U.todayISO());
+    const list = S.user.role === 'VIEWER' ? REPORTS.filter(r => AGG_REPORTS.includes(r[0])) : REPORTS;
+    view.innerHTML = `<div class="card no-print" style="padding:16px"><div class="filters" style="margin:0">
+      <div style="grid-column:span 2"><label class="f">รายงาน</label><select class="input" id="rType">${list.map(r => `<option value="${r[0]}">${r[1]}</option>`).join('')}</select></div>
+      <div><label class="f">ปีงบประมาณ</label><select class="input" id="rFy">${[0, 1, 2, 3].map(i => `<option>${fy - i}</option>`).join('')}</select></div>
+      <div><label class="f">ตั้งแต่ (ถ้าระบุ)</label><input type="date" class="input" id="rFrom"></div>
+      <div><label class="f">ถึง (ถ้าระบุ)</label><input type="date" class="input" id="rTo"></div>
+      <div><label class="f">หมู่บ้าน</label><select class="input" id="rV">${villageOptions().map(([v, t]) => `<option value="${v}">${U.esc(t)}</option>`).join('')}</select></div>
+      <div style="display:flex;align-items:flex-end"><button class="btn btn-primary btn-block" id="rRun"><i class="fa-solid fa-play"></i> แสดงรายงาน</button></div></div></div>
+      <div class="card" id="rOut">${UI.empty('เลือกรายงานแล้วกด "แสดงรายงาน"', 'fa-file-lines')}</div>`;
+    const run = async () => {
+      const out = document.getElementById('rOut'); out.innerHTML = UI.skeleton(6);
+      const p = { type: document.getElementById('rType').value, fiscalYear: document.getElementById('rFy').value, from: document.getElementById('rFrom').value, to: document.getElementById('rTo').value, vhid: document.getElementById('rV').value };
+      const r = await API.call('getReportData', p);
+      const title = REPORTS.find(x => x[0] === r.type)[1];
+      const vtxt = p.vhid ? 'หมู่ ' + Number(p.vhid) : 'ทุกหมู่บ้าน';
+      const dateCols = ['birth', 'date', 'first', 'due', 'follow', 'problem_date', 'next'];
+      const cols = r.columns.map(c => ({ key: c.key, label: c.label, render: dateCols.includes(c.key) ? (row => U.fmtDate(row[c.key])) : null }));
+      out.innerHTML = `<div class="print-head"><h2>${U.esc(title)}</h2><div>${U.esc(S.meta.hosname)} · ${vtxt} · ${U.fmtDate(r.period.from)} – ${U.fmtDate(r.period.to)} · พิมพ์ ${U.fmtDateTime(new Date().toISOString())}</div></div>
+        <div class="card-h"><h3>${U.esc(title)}</h3><span class="small muted">${r.rows.length} รายการ · ${vtxt} · ${U.fmtDate(r.period.from)} – ${U.fmtDate(r.period.to)}</span>
+        <button class="btn btn-ghost btn-sm no-print" id="rXls"><i class="fa-solid fa-file-excel"></i> Excel</button><button class="btn btn-ghost btn-sm no-print" onclick="window.print()"><i class="fa-solid fa-print"></i> พิมพ์ / PDF</button></div>
+        ${r.notes.length ? `<div class="notice"><i class="fa-solid fa-circle-info"></i><div>${r.notes.map(U.esc).join('<br>')}</div></div>` : ''}
+        ${UI.table(cols, r.rows, { empty: 'ไม่มีข้อมูลในช่วงเวลาที่เลือก' })}`;
+      document.getElementById('rXls').addEventListener('click', () => exportXlsx(`${title}_${r.period.from}_${r.period.to}.xlsx`, r.columns, r.rows, title));
+    };
+    document.getElementById('rRun').addEventListener('click', () => run().catch(e => { document.getElementById('rOut').innerHTML = UI.empty(e.message, 'fa-face-frown'); }));
+  }
+};
+
+/* ---------------- USERS ---------------- */
+Pages.users = {
+  async render(view) {
+    const r = await API.call('getUsers');
+    view.innerHTML = `<div class="toolbar"><div class="grow"></div><button class="btn btn-primary" id="uAdd"><i class="fa-solid fa-user-plus"></i> เพิ่มผู้ใช้</button></div>
+      <div class="card">${UI.table([{ key: 'username', label: 'ชื่อผู้ใช้' }, { key: 'full_name', label: 'ชื่อ-สกุล' }, { key: 'role', label: 'บทบาท', render: u => UI.badge(ROLE_TEXT[u.role] || u.role, u.role === 'ADMIN' ? 'orange' : 'brand') },
+        { key: 'villages', label: 'หมู่บ้านที่รับผิดชอบ', render: u => U.esc(u.villages.join(', ') || (u.role === 'VOLUNTEER' ? '-' : 'ทั้งหมด')) }, { key: 'active', label: 'สถานะ', render: u => (u.active ? UI.badge('ใช้งาน', 'green') : UI.badge('ระงับ', 'gray')) + (u.locked ? ' ' + UI.badge('ถูกล็อก', 'red') : '') + (u.must_change_pw ? ' ' + UI.badge('รอเปลี่ยนรหัส', 'yellow') : '') },
+        { key: 'last_login', label: 'เข้าใช้ล่าสุด', render: u => U.fmtDateTime(u.last_login) }, { key: 'x', label: '', render: u => `<div style="display:flex;gap:4px"><button class="btn btn-ghost btn-sm" data-e="${U.esc(u.username)}"><i class="fa-solid fa-pen"></i></button><button class="btn btn-ghost btn-sm" data-p="${U.esc(u.username)}" title="ตั้งรหัสผ่านใหม่"><i class="fa-solid fa-key"></i></button></div>` }], r.users)}</div>
+      <div class="card small muted"><b>สิทธิ์การใช้งาน</b> (ตรวจสอบที่เซิร์ฟเวอร์ทุกคำขอ): ADMIN จัดการทั้งหมด · STAFF ทะเบียน/ชั่งวัด/ประเมิน/ติดตาม · อสม. เห็นเฉพาะเด็กในหมู่ที่รับผิดชอบ บันทึกเยี่ยมบ้าน/ติดตาม/แจ้งขาดนัด · VIEWER ดู Dashboard และรายงานสรุปที่ไม่ระบุตัวบุคคล</div>`;
+    document.getElementById('uAdd').addEventListener('click', () => this.form());
+    view.querySelectorAll('[data-e]').forEach(b => b.addEventListener('click', () => this.form(r.users.find(u => u.username === b.dataset.e))));
+    view.querySelectorAll('[data-p]').forEach(b => b.addEventListener('click', () => this.reset(b.dataset.p)));
+  },
+  form(u) {
+    const isNew = !u; u = u || { role: 'STAFF', villages: [], active: true };
+    UI.modal({
+      title: isNew ? 'เพิ่มผู้ใช้' : 'แก้ไขผู้ใช้ ' + u.username,
+      body: `<div class="form-grid">${UI.field('username', 'ชื่อผู้ใช้', { required: true, value: u.username, attrs: isNew ? 'pattern="[a-z0-9._-]{3,30}" autocomplete="off"' : 'readonly', hint: 'a-z 0-9 . _ - (3–30 ตัว)' })}
+        ${UI.field('full_name', 'ชื่อ-สกุล', { required: true, value: u.full_name })}
+        ${UI.field('role', 'บทบาท', { type: 'select', required: true, value: u.role, options: Object.entries(ROLE_TEXT) })}
+        ${UI.field('phone', 'เบอร์โทรศัพท์', { value: u.phone })}
+        <div class="full"><label class="f">หมู่บ้านที่รับผิดชอบ (จำเป็นสำหรับ อสม.)</label><div style="display:flex;flex-wrap:wrap;gap:6px 14px">${(S.meta.villages || []).map(v => `<label class="small" style="display:flex;gap:6px"><input type="checkbox" name="vil" value="${v.vhid}" ${u.villages.includes(v.vhid) ? 'checked' : ''}> หมู่ ${Number(v.vhid)}</label>`).join('')}</div></div>
+        ${isNew ? UI.field('password', 'รหัสผ่านเริ่มต้น', { type: 'password', required: true, attrs: 'autocomplete="new-password"', hint: 'อย่างน้อย 8 ตัว มีตัวอักษรและตัวเลข · ผู้ใช้ต้องเปลี่ยนเมื่อเข้าครั้งแรก' }) :
+        UI.field('active', 'สถานะ', { type: 'select', value: u.active ? 'TRUE' : 'FALSE', options: [['TRUE', 'ใช้งาน'], ['FALSE', 'ระงับการใช้งาน']] })}
+        ${!isNew && u.locked ? '<label class="small full"><input type="checkbox" name="unlock" value="1" checked> ปลดล็อกบัญชี</label>' : ''}</div>`,
+      onSubmit: async (d, form) => {
+        const villages = [...form.querySelectorAll('input[name=vil]:checked')].map(x => x.value).join(',');
+        await API.call('saveUser', { isNew, username: d.username, full_name: d.full_name, role: d.role, phone: d.phone, villages, password: d.password, active: d.active !== 'FALSE', unlock: !!d.unlock }, { write: true });
+        UI.toast('บันทึกผู้ใช้เรียบร้อย'); Router.render();
+      }
+    });
+  },
+  reset(username) {
+    UI.modal({
+      title: 'ตั้งรหัสผ่านใหม่: ' + username, size: 'sm', submitText: 'ตั้งรหัสผ่าน',
+      body: `<div class="form-grid" style="grid-template-columns:1fr">${UI.field('password', 'รหัสผ่านใหม่', { type: 'password', required: true, attrs: 'autocomplete="new-password"', hint: 'ผู้ใช้จะถูกบังคับให้เปลี่ยนเมื่อเข้าสู่ระบบครั้งถัดไป' })}</div>`,
+      onSubmit: async d => { await API.call('resetPassword', { username, password: d.password }, { write: true }); UI.toast('ตั้งรหัสผ่านใหม่เรียบร้อย'); }
+    });
+  }
+};
+
+/* ---------------- EXCEL IMPORT (หน้าเฉพาะ — เข้าจากเมนูหรือปุ่มบน Dashboard) ---------------- */
+Pages.import = {
+  title: 'นำเข้าข้อมูลทะเบียนจากไฟล์ Excel',
+  async render(view) {
+    view.innerHTML = '<div class="card" id="importBody"></div>';
+    await Pages.settings.t_import.call(Pages.settings, document.getElementById('importBody'));
+  }
+};
+
+/* ---------------- SETTINGS / DATA MANAGEMENT ---------------- */
+Pages.settings = {
+  tab: 'import',
+  async render(view) {
+    const tabs = [['import', 'นำเข้า Excel ทะเบียน'], ['growthref', 'ตารางอ้างอิง WHO'], ['items', 'ข้อประเมิน DSPM'], ['export', 'ส่งออกข้อมูล'], ['backup', 'สำรอง/กู้คืน'], ['config', 'ค่าตั้งค่าระบบ'], ['history', 'ประวัตินำเข้า'], ['audit', 'Audit Log']];
+    view.innerHTML = `<div class="card"><div class="tabs" id="sTabs">${tabs.map(t => `<button data-t="${t[0]}" class="${t[0] === this.tab ? 'active' : ''}">${t[1]}</button>`).join('')}</div><div id="sBody"></div></div>`;
+    view.querySelectorAll('#sTabs button').forEach(b => b.addEventListener('click', () => { this.tab = b.dataset.t; view.querySelectorAll('#sTabs button').forEach(x => x.classList.toggle('active', x === b)); this.draw().catch(UI.error); }));
+    await this.draw();
+  },
+  async draw() {
+    const el = document.getElementById('sBody');
+    el.innerHTML = UI.skeleton(3);
+    await this['t_' + this.tab](el);
+  },
+  readFile(file) {
+    return new Promise((resolve, reject) => {
+      if (!/\.(xlsx|xls|csv)$/i.test(file.name)) { reject(new ApiError('VALIDATION', 'รองรับเฉพาะไฟล์ .xlsx .xls หรือ .csv')); return; }
+      if (file.size > 15 * 1024 * 1024) { reject(new ApiError('VALIDATION', 'ไฟล์มีขนาดเกิน 15 MB')); return; }
+      const fr = new FileReader();
+      fr.onload = e => { try { const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true }); resolve(wb); } catch (err) { reject(new ApiError('VALIDATION', 'อ่านไฟล์ไม่สำเร็จ: ' + err.message)); } };
+      fr.onerror = () => reject(new ApiError('VALIDATION', 'อ่านไฟล์ไม่สำเร็จ'));
+      fr.readAsArrayBuffer(file);
+    });
+  },
+  /** แปลงค่าเซลล์เป็นข้อความโดยไม่เสียความแม่นยำ: เลขยาว (CID) ไม่เป็น 1.4E+12, วันที่ไม่เลื่อนตาม timezone */
+  cellStr(v) {
+    if (v == null) return '';
+    if (v instanceof Date) { if (isNaN(v)) return ''; return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}`; }
+    if (typeof v === 'number') return Number.isInteger(v) ? v.toFixed(0) : String(v);
+    return String(v).trim();
+  },
+  sheetRows(ws, headerRow = 0) {
+    const raw = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true, range: headerRow });
+    const rows = raw.map(r => { const o = {}; Object.keys(r).forEach(k => { o[k] = this.cellStr(r[k]); }); return o; });
+    const headers = (XLSX.utils.sheet_to_json(ws, { header: 1, range: headerRow })[0] || []).map(h => String(h).trim());
+    return { headers, rows };
+  },
+  /** หา Sheet และแถวหัวตารางที่มีคอลัมน์ pid + birth (รองรับไฟล์หลาย Sheet และมีแถวชื่อรายงานอยู่ด้านบน) */
+  pickSheet(wb) {
+    for (const name of wb.SheetNames) {
+      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: true, defval: '' }).slice(0, 20);
+      const hr = aoa.findIndex(row => { const l = row.map(c => String(c).trim().toLowerCase()); return l.includes('pid') && l.includes('birth'); });
+      if (hr >= 0) return { name, ws: wb.Sheets[name], headerRow: hr };
+    }
+    return { name: wb.SheetNames[0], ws: wb.Sheets[wb.SheetNames[0]], headerRow: 0 };
+  },
+  dropzone(id, text) {
+    return `<label class="dropzone" id="${id}"><input type="file" accept=".xlsx,.xls,.csv" hidden><i class="fa-solid fa-file-arrow-up"></i><div style="margin-top:8px">${text}</div><div class="hint">ลากไฟล์มาวาง หรือคลิกเพื่อเลือก (.xlsx, .xls)</div></label>`;
+  },
+  bindDrop(id, onFile) {
+    const dz = document.getElementById(id), inp = dz.querySelector('input');
+    inp.addEventListener('change', () => inp.files[0] && onFile(inp.files[0]));
+    ['dragover', 'dragenter'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('drag'); }));
+    ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('drag'); }));
+    dz.addEventListener('drop', e => e.dataTransfer.files[0] && onFile(e.dataTransfer.files[0]));
+  },
+
+  /* ---- Excel import wizard ---- */
+  async t_import(el) {
+    el.innerHTML = `<div class="steps" id="imSteps">${['1 เลือกไฟล์', '2 ตรวจสอบ', '3 ยืนยันนำเข้า', '4 ผลลัพธ์'].map((s, i) => `<span class="s ${i === 0 ? 'on' : ''}">${s}</span>`).join('')}</div>
+      <div class="notice"><i class="fa-solid fa-circle-info"></i><div>ใช้ไฟล์ทะเบียน 0–5 ปี (24 ฟิลด์: ${SOURCE_FIELDS.join(', ')}) · ใช้ <b>PID</b> ตรวจข้อมูลซ้ำ และตรวจ CID ประกอบ · การนำเข้า<b>ไม่ลบ</b>ประวัติการตรวจ น้ำหนักส่วนสูง การติดตาม หรือข้อมูลที่เจ้าหน้าที่บันทึกเพิ่ม · 1 PID อาจมีหลายแถวได้เมื่ออายุเป้าหมาย (agemonth) ต่างกัน</div></div>
+      ${this.dropzone('imDrop', 'เลือกไฟล์ Excel ทะเบียนเด็ก')}<div id="imOut" style="margin-top:16px"></div>`;
+    const step = n => document.querySelectorAll('#imSteps .s').forEach((s, i) => s.classList.toggle('on', i <= n));
+    this.bindDrop('imDrop', async file => {
+      const out = document.getElementById('imOut');
+      try {
+        UI.loading(true, 'กำลังอ่านไฟล์ด้วย SheetJS...');
+        const wb = await this.readFile(file);
+        const pick = this.pickSheet(wb);
+        const { headers, rows } = this.sheetRows(pick.ws, pick.headerRow);
+        const lower = headers.map(h => h.toLowerCase());
+        const missing = SOURCE_FIELDS.filter(f => !lower.includes(f));
+        const norm = rows.map((r, i) => { const o = { _rowNo: i + pick.headerRow + 2 }; Object.keys(r).forEach(k => { o[String(k).trim().toLowerCase()] = r[k]; }); return o; })
+          .filter(r => SOURCE_FIELDS.some(f => r[f] && !/^(<NA>|NULL)$/i.test(r[f])));
+        UI.loading(false);
+        out.innerHTML = `<div class="stat-row"><div class="st"><span class="small muted">ไฟล์</span><b style="font-size:15px;word-break:break-all">${U.esc(file.name)}</b></div><div class="st"><span class="small muted">Sheet</span><b style="font-size:15px">${U.esc(pick.name)}${pick.headerRow ? ` <span class="small muted">(หัวตารางแถว ${pick.headerRow + 1})</span>` : ''}</b></div><div class="st"><span class="small muted">จำนวนแถวข้อมูล</span><b>${norm.length}</b></div><div class="st"><span class="small muted">หัวตาราง</span><b style="font-size:15px">${missing.length ? '<span style="color:var(--st-critical-ink)">ไม่ครบ</span>' : '<span style="color:var(--st-good-ink)">ครบ 24 ฟิลด์</span>'}</b></div></div>`;
+        if (missing.length) { out.innerHTML += `<div class="notice danger"><i class="fa-solid fa-circle-xmark"></i><div>ขาดคอลัมน์: <b>${missing.map(U.esc).join(', ')}</b> — กรุณาตรวจสอบไฟล์</div></div>`; return; }
+        if (!norm.length) { out.innerHTML += UI.empty('ไม่พบแถวข้อมูล'); return; }
+        const preview = norm.slice(0, 10).map(r => ({ ...r, cid: U.maskCid(r.cid) }));
+        out.innerHTML += `<h4 style="margin:10px 0">ตัวอย่างข้อมูล 10 แถวแรก (CID ถูกปกปิด)</h4>` + UI.table(['_rowNo', 'pid', 'cid', 'name', 'lname', 'sex', 'birth', 'vhid', 'agemonth', 'date_serv_first', 'result1', 'result2'].map(k => ({ key: k, label: k === '_rowNo' ? 'แถว' : k })), preview) + '<div id="imCheck" style="margin-top:14px"></div>';
+        step(1);
+        UI.loading(true, 'กำลังตรวจสอบข้อมูลกับฐานข้อมูล...');
+        const pv = await API.call('previewImport', { headers: lower, rows: norm }, { timeout: 120000 });
+        UI.loading(false);
+        const chk = document.getElementById('imCheck');
+        chk.innerHTML = `<div class="stat-row"><div class="st"><span class="small muted">แถวที่ถูกต้อง</span><b>${pv.validRows}</b></div><div class="st"><span class="small muted">เด็กใหม่</span><b style="color:var(--st-good-ink)">${pv.newChildren}</b></div><div class="st"><span class="small muted">เด็กที่มีอยู่แล้ว</span><b>${pv.existingChildren}</b></div><div class="st"><span class="small muted">แถวคัดกรองใหม่/เดิม</span><b>${pv.newScreening} / ${pv.existingScreening}</b></div><div class="st"><span class="small muted">ข้อผิดพลาด</span><b style="color:${pv.errorCount ? 'var(--st-critical-ink)' : 'inherit'}">${pv.errorCount}</b></div></div>
+          ${pv.errorCount ? '<h4 style="margin:10px 0">แถวที่ผิดพลาด (จะไม่ถูกนำเข้า)</h4>' + UI.table([{ key: 'row', label: 'แถวที่' }, { key: 'pid', label: 'PID' }, { key: 'message', label: 'สาเหตุ' }], pv.errors) : ''}
+          ${pv.warningCount ? '<h4 style="margin:10px 0">คำเตือน (นำเข้าได้ แต่ควรตรวจสอบ)</h4>' + UI.table([{ key: 'row', label: 'แถวที่' }, { key: 'pid', label: 'PID' }, { key: 'message', label: 'รายละเอียด' }], pv.warnings) : ''}
+          <div class="card" style="margin-top:14px;background:var(--surface-2)"><div class="form-grid"><div><label class="f">โหมดการนำเข้า</label><select class="input" id="imMode"><option value="UPSERT">UPSERT — เพิ่มใหม่และอัปเดตข้อมูลเดิม</option><option value="INSERT">INSERT — เพิ่มเฉพาะข้อมูลใหม่</option><option value="UPDATE">UPDATE — ปรับปรุงเฉพาะข้อมูลเดิม</option></select></div>
+          <div style="display:flex;align-items:flex-end"><button class="btn btn-primary btn-block" id="imGo" ${pv.validRows ? '' : 'disabled'}><i class="fa-solid fa-cloud-arrow-up"></i> ยืนยันนำเข้า ${pv.validRows} แถว</button></div></div></div>`;
+        step(2);
+        document.getElementById('imGo')?.addEventListener('click', async () => {
+          const mode = document.getElementById('imMode').value;
+          if (!(await UI.confirm('ยืนยันการนำเข้าข้อมูล', `โหมด <b>${mode}</b><br>แถวที่ถูกต้อง ${pv.validRows} แถว · ข้อผิดพลาด ${pv.errorCount} แถว (ข้าม)<br>ไฟล์: ${U.esc(file.name)}`, 'นำเข้า'))) return;
+          try {
+            UI.loading(true, 'กำลังบันทึกลง Google Sheets...');
+            const r = await API.call('importExcelData', { headers: lower, rows: norm, mode, fileName: file.name }, { write: true, timeout: 300000 });
+            UI.loading(false); step(3);
+            const s = r.stats;
+            chk.innerHTML = `<div class="notice"><i class="fa-solid fa-circle-check" style="color:var(--st-good)"></i><div><b>นำเข้าสำเร็จ</b> (เลขที่ ${U.esc(r.importId)}) — เซิร์ฟเวอร์ยืนยันการบันทึกแล้ว</div></div>
+              <div class="stat-row"><div class="st"><span class="small muted">เด็กเพิ่มใหม่</span><b>${s.childInserted}</b></div><div class="st"><span class="small muted">เด็กปรับปรุง</span><b>${s.childUpdated}</b></div><div class="st"><span class="small muted">เด็กข้าม</span><b>${s.childSkipped}</b></div><div class="st"><span class="small muted">แถวคัดกรอง เพิ่ม/ปรับ/ข้าม</span><b>${s.srcInserted}/${s.srcUpdated}/${s.srcSkipped}</b></div><div class="st"><span class="small muted">แถวผิดพลาด</span><b>${r.errorCount}</b></div></div>`;
+            S.children = null; S.dash = null; S.meta = await API.call('getMeta');
+            await Swal.fire({ icon: 'success', title: 'นำเข้าข้อมูลสำเร็จ', html: `เพิ่ม ${s.childInserted} · ปรับปรุง ${s.childUpdated} · ข้าม ${s.childSkipped} คน`, confirmButtonText: 'ไปที่ Dashboard', showCancelButton: true, cancelButtonText: 'อยู่หน้านี้', confirmButtonColor: '#059669' })
+              .then(x => { if (x.isConfirmed) Router.go('#/dashboard'); });
+          } catch (e) { UI.loading(false); UI.error(e, 'นำเข้าไม่สำเร็จ'); }
+        });
+      } catch (e) { UI.loading(false); UI.error(e); }
+    });
+  },
+
+  /* ---- WHO growth reference ---- */
+  async t_growthref(el) {
+    el.innerHTML = `<div class="notice warn"><i class="fa-solid fa-book-medical"></i><div>ระบบ<b>ไม่ฝัง</b>ค่าอ้างอิงการเจริญเติบโตไว้ในโค้ด — ให้ดาวน์โหลดตาราง <b>WHO Child Growth Standards</b> (ไฟล์ "z-scores" หรือ "expanded tables" ที่มีคอลัมน์ L, M, S) จากเว็บไซต์องค์การอนามัยโลก แล้วนำเข้าทีละดัชนี/เพศ ก่อนนำเข้ารายการแปลผลจะแสดงเป็น "รอประเมิน"</div></div>
+      <div class="form-grid" style="margin-bottom:14px">
+        <div><label class="f">ดัชนี</label><select class="input" id="grInd"><option value="wfa">น้ำหนักตามอายุ (Weight-for-age)</option><option value="lhfa">ความยาว/ส่วนสูงตามอายุ (Length/height-for-age)</option><option value="wfl">น้ำหนักตามความยาว (Weight-for-length, 0–2 ปี)</option><option value="wfh">น้ำหนักตามส่วนสูง (Weight-for-height, 2–5 ปี)</option><option value="bfa">BMI ตามอายุ (BMI-for-age)</option></select></div>
+        <div><label class="f">เพศ</label><select class="input" id="grSex"><option value="1">ชาย (boys)</option><option value="2">หญิง (girls)</option></select></div>
+        <div class="full"><label class="f">แหล่งอ้างอิง (บันทึกไว้ตรวจสอบ)</label><input class="input" id="grSrc" placeholder="เช่น WHO Child Growth Standards, wfa_boys_0-to-5-years_zscores.xlsx"></div></div>
+      ${this.dropzone('grDrop', 'เลือกไฟล์ตาราง LMS ของ WHO')}<div id="grOut" style="margin-top:14px"></div>
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" id="grRecalc"><i class="fa-solid fa-calculator"></i> คำนวณผลที่ "รอประเมิน" ใหม่</button><button class="btn btn-ghost" id="grRecalcAll"><i class="fa-solid fa-rotate"></i> คำนวณใหม่ทั้งหมด (หลังเปลี่ยนเกณฑ์)</button></div>`;
+    this.bindDrop('grDrop', async file => {
+      const out = document.getElementById('grOut');
+      try {
+        const wb = await this.readFile(file);
+        const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '', raw: true });
+        if (!raw.length) throw new ApiError('VALIDATION', 'ไม่พบข้อมูลในไฟล์');
+        const keys = Object.keys(raw[0]); const find = n => keys.find(k => k.trim().toLowerCase() === n);
+        const xKey = find('day') || find('month') || find('length') || find('height') || find('age');
+        const unit = find('day') ? 'day' : (find('month') || find('age')) ? 'month' : 'cm';
+        const L = find('l'), M = find('m'), Sx = find('s');
+        if (!xKey || !L || !M || !Sx) throw new ApiError('VALIDATION', 'ไม่พบคอลัมน์ Day/Month/Length/Height และ L, M, S ในไฟล์ (พบ: ' + keys.join(', ') + ')');
+        const ind = document.getElementById('grInd').value;
+        if ((ind === 'wfl' || ind === 'wfh') !== (unit === 'cm')) throw new ApiError('VALIDATION', `ไฟล์ใช้หน่วย ${unit} ไม่ตรงกับดัชนีที่เลือก`);
+        const rows = raw.map(r => ({ x: Number(r[xKey]), L: Number(r[L]), M: Number(r[M]), S: Number(r[Sx]) })).filter(r => !isNaN(r.x) && !isNaN(r.M));
+        out.innerHTML = `<div class="small">พบ ${rows.length} แถว · หน่วย <b>${unit}</b> · ช่วง ${rows[0].x}–${rows[rows.length - 1].x}</div>` + UI.table(['x', 'L', 'M', 'S'].map(k => ({ key: k, label: k })), rows.slice(0, 5));
+        const sex = document.getElementById('grSex').value;
+        if (!(await UI.confirm('นำเข้าตารางอ้างอิง', `ดัชนี <b>${ind.toUpperCase()}</b> เพศ <b>${sex === '1' ? 'ชาย' : 'หญิง'}</b> หน่วย ${unit} ${rows.length} แถว<br>ตารางเดิมของดัชนี/เพศ/หน่วยนี้จะถูกแทนที่`))) return;
+        UI.loading(true, 'กำลังบันทึก...');
+        const r = await API.call('importGrowthReference', { indicator: ind, sex, x_unit: unit, rows, fileName: file.name, source: document.getElementById('grSrc').value }, { write: true, timeout: 120000 });
+        S.meta = await API.call('getMeta');
+        UI.loading(false); UI.toast(`นำเข้า ${r.imported} แถวเรียบร้อย`);
+      } catch (e) { UI.loading(false); UI.error(e); }
+    });
+    const recalc = async all => { try { UI.loading(true, 'กำลังคำนวณ Z-score...'); const r = await API.call('recalcGrowth', { all }, { write: true, timeout: 300000 }); UI.loading(false); UI.toast(`คำนวณใหม่ ${r.recalculated} รายการ`); S.children = null; S.dash = null; } catch (e) { UI.loading(false); UI.error(e); } };
+    document.getElementById('grRecalc').addEventListener('click', () => recalc(false));
+    document.getElementById('grRecalcAll').addEventListener('click', () => recalc(true));
+  },
+
+  /* ---- DSPM item master ---- */
+  async t_items(el) {
+    el.innerHTML = `<div class="notice warn"><i class="fa-solid fa-book-medical"></i><div>ระบบ<b>ไม่สร้างข้อคำถามหรือเกณฑ์คะแนน DSPM ขึ้นเอง</b> — ผู้ดูแลต้องจัดทำไฟล์ข้อประเมินจากคู่มือ DSPM ฉบับที่หน่วยงานรับรอง แล้วนำเข้าที่นี่ (แทนที่รายการเดิมทั้งหมด)<br>คอลัมน์: <code>item_no, age_from_month, age_to_month, domain (gm/fm/rl/el/ps), item_text, active, source_ref</code></div></div>
+      <div class="toolbar"><button class="btn btn-ghost" id="itTpl"><i class="fa-solid fa-download"></i> ดาวน์โหลดแม่แบบ (หัวตารางเปล่า)</button></div>
+      ${this.dropzone('itDrop', 'เลือกไฟล์ข้อประเมิน DSPM')}<div id="itOut" style="margin-top:14px"></div>`;
+    document.getElementById('itTpl').addEventListener('click', () => { const ws = XLSX.utils.aoa_to_sheet([['item_no', 'age_from_month', 'age_to_month', 'domain', 'item_text', 'active', 'source_ref']]); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'DSPM_Items'); XLSX.writeFile(wb, 'DSPM_Item_Template.xlsx'); });
+    this.bindDrop('itDrop', async file => {
+      try {
+        const wb = await this.readFile(file);
+        const { rows } = this.sheetRows(wb.Sheets[wb.SheetNames[0]]);
+        const norm = rows.map(r => { const o = {}; Object.keys(r).forEach(k => o[k.trim().toLowerCase()] = r[k]); return o; }).filter(r => r.item_no);
+        document.getElementById('itOut').innerHTML = UI.table(['item_no', 'age_from_month', 'age_to_month', 'domain', 'item_text'].map(k => ({ key: k, label: k })), norm.slice(0, 10));
+        if (!(await UI.confirm('นำเข้าข้อประเมิน', `${norm.length} ข้อ — รายการเดิมจะถูกแทนที่ทั้งหมด`))) return;
+        UI.loading(true, 'กำลังบันทึก...');
+        const r = await API.call('importDevItemMaster', { rows: norm, fileName: file.name }, { write: true });
+        S.meta = await API.call('getMeta'); UI.loading(false); UI.toast(`นำเข้า ${r.imported} ข้อเรียบร้อย`);
+      } catch (e) { UI.loading(false); UI.error(e); }
+    });
+  },
+
+  /* ---- Export ---- */
+  async t_export(el) {
+    el.innerHTML = `<div class="notice"><i class="fa-solid fa-shield-halved"></i><div>ไฟล์ที่ส่งออกมีข้อมูลส่วนบุคคล (PDPA) — จัดเก็บอย่างปลอดภัยและใช้ตามวัตถุประสงค์เท่านั้น ทุกการส่งออกถูกบันทึกใน Audit Log (ไม่อนุญาตส่งออก Sheet ผู้ใช้งาน)</div></div>
+      <div class="toolbar"><select class="input" id="exSheet" style="max-width:300px">${SHEETS.map(s => `<option>${s}</option>`).join('')}</select><button class="btn btn-primary" id="exGo"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button></div>`;
+    document.getElementById('exGo').addEventListener('click', async () => {
+      try {
+        UI.loading(true, 'กำลังดึงข้อมูล...');
+        const r = await API.call('exportData', { sheet: document.getElementById('exSheet').value }, { timeout: 120000 });
+        const ws = XLSX.utils.aoa_to_sheet([r.headers].concat(r.rows)); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, r.sheet.slice(0, 31));
+        XLSX.writeFile(wb, `${r.sheet}_${U.todayISO()}.xlsx`); UI.toast(`ส่งออก ${r.rows.length} แถว`);
+      } catch (e) { UI.error(e); } finally { UI.loading(false); }
+    });
+  },
+
+  /* ---- Backup / restore ---- */
+  async t_backup(el) {
+    el.innerHTML = `<div class="toolbar"><button class="btn btn-primary" id="bkNew"><i class="fa-solid fa-box-archive"></i> สำรองข้อมูลตอนนี้</button><span class="small muted">สำเนา Google Sheets ทั้งไฟล์ไปยัง Google Drive</span></div><div id="bkList">${UI.skeleton(3)}</div>`;
+    const load = async () => {
+      const r = await API.call('listBackups');
+      const box = document.getElementById('bkList');
+      box.innerHTML = UI.table([{ key: 'name', label: 'ไฟล์สำรอง' }, { key: 'created', label: 'วันที่สร้าง', render: b => U.fmtDateTime(b.created) }, { key: 'x', label: '', render: b => `<button class="btn btn-ghost btn-sm" data-rs="${U.esc(b.id)}"><i class="fa-solid fa-clock-rotate-left"></i> กู้คืน</button>` }], r.backups, { empty: 'ยังไม่มีไฟล์สำรอง' });
+      box.querySelectorAll('[data-rs]').forEach(b => b.addEventListener('click', () => this.restore(r.backups.find(x => x.id === b.dataset.rs))));
+    };
+    document.getElementById('bkNew').addEventListener('click', async () => { try { UI.loading(true, 'กำลังสำรองข้อมูล...'); const r = await API.call('createBackup', {}, { write: true, timeout: 120000 }); UI.toast('สำรองข้อมูลแล้ว: ' + r.name); await load(); } catch (e) { UI.error(e); } finally { UI.loading(false); } });
+    await load();
+  },
+  restore(b) {
+    UI.modal({
+      title: 'กู้คืนจาก ' + b.name, submitText: 'กู้คืน',
+      body: `<div class="notice danger"><i class="fa-solid fa-triangle-exclamation"></i><div>ข้อมูลปัจจุบันของ Sheet ที่เลือกจะถูกแทนที่ด้วยข้อมูลจากไฟล์สำรอง ระบบจะสำรองสถานะปัจจุบันอัตโนมัติก่อนกู้คืน</div></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:12px">${SHEETS.map(s => `<label class="small" style="display:flex;gap:6px"><input type="checkbox" name="sh" value="${s}"> ${s}</label>`).join('')}</div>
+        ${UI.field('confirm', 'พิมพ์คำว่า RESTORE เพื่อยืนยัน', { required: true })}`,
+      onSubmit: async (d, form) => {
+        const sheets = [...form.querySelectorAll('input[name=sh]:checked')].map(x => x.value);
+        if (!sheets.length) throw new ApiError('VALIDATION', 'กรุณาเลือก Sheet');
+        if (d.confirm !== 'RESTORE') throw new ApiError('VALIDATION', 'กรุณาพิมพ์ RESTORE ให้ถูกต้อง');
+        const r = await API.call('restoreBackup', { backupId: b.id, sheets, confirm: d.confirm }, { write: true, timeout: 300000 });
+        S.children = null; S.dash = null;
+        Swal.fire({ icon: 'success', title: 'กู้คืนเรียบร้อย', html: r.restored.map(x => `${U.esc(x.sheet)}: ${x.rows} แถว`).join('<br>') + `<br><span class="small">สำรองก่อนกู้คืน: ${U.esc(r.safetyBackup.name)}</span>` });
+      }
+    });
+  },
+
+  /* ---- Config ---- */
+  async t_config(el) {
+    const r = await API.call('getConfig');
+    el.innerHTML = `<form id="cfgForm"><div class="form-grid">${r.map(c => `<div class="${c.key === 'VACCINE_LIST' || c.key === 'DASHBOARD_PUBLIC_NOTE' ? 'full' : ''}"><label class="f">${U.esc(c.key)}</label><input class="input" name="${U.esc(c.key)}" value="${U.esc(c.value)}"><div class="hint">${U.esc(c.description)}</div></div>`).join('')}</div>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่า</button></div></form>`;
+    document.getElementById('cfgForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const d = U.formData(e.target);
+      try { UI.loading(true, 'กำลังบันทึก...'); const x = await API.call('saveConfig', { items: Object.keys(d).map(k => ({ key: k, value: d[k] })) }, { write: true }); S.meta = await API.call('getMeta'); S.dash = null; S.children = null; UI.toast(`บันทึก ${x.changed} รายการ`); }
+      catch (err) { UI.error(err); } finally { UI.loading(false); }
+    });
+  },
+  async t_history(el) {
+    const r = await API.call('getImportHistory');
+    el.innerHTML = UI.table([{ key: 'finished_at', label: 'เวลา', render: h => U.fmtDateTime(h.finished_at) }, { key: 'import_type', label: 'ประเภท' }, { key: 'file_name', label: 'ไฟล์' }, { key: 'mode', label: 'โหมด' }, { key: 'total_rows', label: 'แถว' }, { key: 'inserted', label: 'เพิ่ม' }, { key: 'updated', label: 'ปรับปรุง' }, { key: 'skipped', label: 'ข้าม' }, { key: 'errors', label: 'ผิดพลาด' }, { key: 'username', label: 'ผู้นำเข้า' }], r.history, { empty: 'ยังไม่มีประวัติการนำเข้า' });
+  },
+  async t_audit(el) {
+    el.innerHTML = `<div class="toolbar"><div class="search grow"><i class="fa-solid fa-magnifying-glass"></i><input class="input" id="auQ" placeholder="ค้นหา ผู้ใช้ / action / sheet / record"></div></div><div id="auList"></div>`;
+    const load = async () => {
+      const r = await API.call('getAuditLog', { q: document.getElementById('auQ').value, limit: 300 });
+      document.getElementById('auList').innerHTML = UI.table([{ key: 'timestamp', label: 'เวลา', render: l => U.fmtDateTime(l.timestamp), cls: 'nowrap' }, { key: 'username', label: 'ผู้ใช้' }, { key: 'role', label: 'บทบาท' }, { key: 'action', label: 'การกระทำ' }, { key: 'sheet', label: 'Sheet' }, { key: 'record_id', label: 'Record' }, { key: 'detail', label: 'รายละเอียด', render: l => `<span class="small muted" style="word-break:break-all">${U.esc(String(l.detail).slice(0, 220))}</span>` }], r.logs);
+    };
+    document.getElementById('auQ').addEventListener('input', U.debounce(() => load().catch(UI.error), 400));
+    await load();
+  }
+};
+
+Router.pages = Pages;
+document.addEventListener('DOMContentLoaded', () => App.init());
+</script>
+</body>
+</html>
